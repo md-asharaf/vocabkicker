@@ -114,35 +114,23 @@ export class UIManager {
     this.hintEl.style.display = this._hintVisible ? 'inline' : 'none';
   }
 
-  // ── Aim overlay ──────────────────────────────────────────────────
-
-  /**
-   * Show the aim ring on screen at (sx, sy) with given power and curve.
-   * @param {number} sx  screen X
-   * @param {number} sy  screen Y
-   * @param {number} power 0..1
-   * @param {number} curveFactor -1..+1
-   */
-  showAim(sx, sy, power, curveFactor) {
-    // Power bar UI removed as per user request
-  }
-
-  hideAim() {
-    // Power bar UI removed as per user request
-  }
-
   // ── Feedback banner ──────────────────────────────────────────────
 
-  showFeedback(correct, word, definition, points) {
+  showFeedback(correct, word, definition, points, customTitle = null) {
     const GOAL_EMOJIS = ['⚽🎉', '🥅✨', '💯🔥', '🎯⚡', '🌟💥'];
     const MISS_EMOJIS = ['😬🧤', '🙈❌', '💨🤦', '🛑😮', '😤🧤'];
-    const GOAL_TITLES = ['GOOOAL!', 'PERFECT SHOT!', 'BULLSEYE!', 'AMAZING!', 'GREAT KICK!'];
-    const MISS_TITLES = ['BLOCKED!', 'CAUGHT!', 'WRONG ANSWER!', 'SAVED!', 'MISSED!'];
+    const GOAL_TITLES = ['Gooal!', 'Perfect Shot!', 'BullsEye!', 'Amazing!', 'Great Kick!'];
+    const MISS_TITLES = ['Blocked!', 'Caught!', 'Wrong Answer!', 'Saved!', 'Missed!'];
 
     const idx = Math.floor(Math.random() * 5);
     document.getElementById('feedbackEmoji').textContent = correct ? GOAL_EMOJIS[idx] : MISS_EMOJIS[idx];
     const titleEl = document.getElementById('feedbackTitle');
-    titleEl.textContent = correct ? GOAL_TITLES[idx] : MISS_TITLES[idx];
+
+    if (customTitle) {
+      titleEl.textContent = customTitle;
+    } else {
+      titleEl.textContent = correct ? GOAL_TITLES[idx] : MISS_TITLES[idx];
+    }
     titleEl.style.color = correct ? '#22c55e' : '#ef4444';
 
     const ptsEl = document.getElementById('feedbackPoints');
@@ -150,8 +138,6 @@ export class UIManager {
     ptsEl.style.color = points > 0 ? '#ffd700' : '#ff6b35';
 
     const def = definition.length > 68 ? definition.slice(0, 66) + '…' : definition;
-    document.getElementById('feedbackWord').textContent = `"${word}" = ${def}`;
-
     this.fbBanner.className = '';
     void this.fbBanner.offsetWidth;
     this.fbBanner.classList.add(correct ? 'correct' : 'wrong');

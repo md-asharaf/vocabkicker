@@ -152,13 +152,11 @@ export class GameState {
       this._curveFactor = curveFactor;
       this._updateAimTarget();
       this._traj.update(this._ball.mesh.position, this._aimTarget, curveFactor);
-      this._ui.showAim(sx, sy, power, curveFactor);
 
       // Project aim target to screen for ring
       const proj = this._aimTarget.clone().project(camera);
       const sx2 = (proj.x * 0.5 + 0.5) * window.innerWidth;
       const sy2 = (1 - proj.y * 0.5 - 0.5) * window.innerHeight;
-      this._ui.showAim(sx2, sy2, power, curveFactor);
     };
 
     inp.onDragEnd = (aimX, aimY, curveFactor) => {
@@ -168,7 +166,6 @@ export class GameState {
       this._curveFactor = curveFactor;
       this._updateAimTarget();
       this._traj.hide();
-      this._ui.hideAim();
       this._beginKick();
     };
 
@@ -176,7 +173,6 @@ export class GameState {
       if (this._phase !== PHASE.AIMING) return;
       this._phase = PHASE.IDLE;
       this._traj.hide();
-      this._ui.hideAim();
     };
   }
 
@@ -218,7 +214,6 @@ export class GameState {
     this._ball.reset();
     this._kicker.resetPosition();
     this._traj.hide();
-    this._ui.hideAim();
     this._pfx.clear();
     this._flashT = 0; this._flashMesh.material.opacity = 0;
     this._ui.hideFeedback();
@@ -321,7 +316,7 @@ export class GameState {
     const dst = this._aimTarget;
     const distance = src.distanceTo(dst);
     const ctrlX = (src.x + dst.x) / 2 + this._curveFactor * Math.min(distance * 0.28, 2.4);
-    
+
     // Evaluate Bezier X at the goal plane (Z = -13.0)
     const t = (GK_Z - src.z) / (dst.z - src.z);
     const mt = 1 - t;
@@ -331,6 +326,7 @@ export class GameState {
 
     let correct = false;
     let pts = PTS_WRONG;
+    let customMsg = null;
 
     if (this._savedBy) {
       // Saved by wrong GK
@@ -340,6 +336,7 @@ export class GameState {
       this._streak = 0;
       this._shake(8, 500);
       this._ball.catch(); // Ball completely freezes in GK's hands!
+      customMsg = 'Saved!';
     } else if (isInGoal) {
       // Goal!
       correct = true;
@@ -357,6 +354,7 @@ export class GameState {
       playMiss();
       this._streak = 0;
       this._ball.drop();
+      customMsg = this._aimTarget.y > GOAL_H ? 'Over the bar!' : 'Wide!';
     }
 
     this._score = Math.max(0, this._score + pts);
@@ -367,7 +365,7 @@ export class GameState {
     else this._ui.markPillWrong(this._qIdx);
 
     const q = this._quiz.getQuestion(this._qIdx);
-    this._ui.showFeedback(correct, q.answer, q.definition, pts);
+    this._ui.showFeedback(correct, q.answer, q.definition, pts, customMsg);
     this._phase = PHASE.RESULT;
 
     // Highlight correct GK card green
