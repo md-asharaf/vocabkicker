@@ -11,14 +11,14 @@ export class AssetManager {
     const loader = new FBXLoader();
 
     const files = [
-      { key: 'kicker', path: '/assets/Strike Foward Jog.fbx' },
-      { key: 'gk_idle', path: '/assets/Goalkeeper Idle.fbx' },
-      { key: 'gk_miss', path: '/assets/Goalkeeper Miss.fbx' },
-      { key: 'dive_left', path: '/assets/Goalkeeper Left Diving Save.fbx' },
-      { key: 'dive_right', path: '/assets/Goalkeeper Right Diving Save.fbx' },
-      { key: 'catch_high', path: '/assets/Goalkeeper High Catch.fbx' },
-      { key: 'catch_mid', path: '/assets/Goalkeeper Standing Catch.fbx' },
-      { key: 'catch_low', path: '/assets/Goalkeeper Low Catch.fbx' }
+      { key: 'kicker', path: './assets/Strike Foward Jog.fbx' },
+      { key: 'gk_idle', path: './assets/Goalkeeper Idle.fbx' },
+      { key: 'gk_miss', path: './assets/Goalkeeper Miss.fbx' },
+      { key: 'dive_left', path: './assets/Goalkeeper Left Diving Save.fbx' },
+      { key: 'dive_right', path: './assets/Goalkeeper Right Diving Save.fbx' },
+      { key: 'catch_high', path: './assets/Goalkeeper High Catch.fbx' },
+      { key: 'catch_mid', path: './assets/Goalkeeper Standing Catch.fbx' },
+      { key: 'catch_low', path: './assets/Goalkeeper Low Catch.fbx' }
     ];
 
     let loaded = 0;
