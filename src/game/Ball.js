@@ -173,6 +173,15 @@ export class Ball {
     this._spinAxis.set(-curveFactor, 0, 1).normalize();
   }
 
+  /**
+   * Get the precise position of the ball at a specific Z coordinate along its curved path.
+   * Because ctrl.z is exactly the midpoint, Z is linear with t.
+   */
+  getPosAtZ(z) {
+    const t = (z - this._src.z) / (this._dst.z - this._src.z);
+    return bezier(t, this._src, this._ctrl, this._dst);
+  }
+
   /** Expose src/ctrl/dst for the trajectory preview. */
   getFlightPath() {
     return { src: this._src, ctrl: this._ctrl, dst: this._dst };

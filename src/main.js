@@ -18,6 +18,7 @@ import { Input }           from './game/Input.js';
 import { Quiz }            from './game/Quiz.js';
 import { GameState }       from './game/GameState.js';
 import { UIManager }       from './ui/UIManager.js';
+import { assetManager }    from './AssetManager.js';
 
 async function bootstrap() {
   const canvas = document.getElementById('gameCanvas');
@@ -33,6 +34,24 @@ async function bootstrap() {
   const goal = createGoal(scene);
   createStadium(scene);
 
+  // ── Load vocab data and 3D Assets ────────────────────────────────
+  const ui    = new UIManager();
+  ui.showLoading();
+  const quiz  = new Quiz();
+  const input = new Input(canvas);
+
+  try {
+    await quiz.load();
+    await assetManager.loadAll(); // Wait for FBX files to load
+  } catch (err) {
+    console.error('Failed to load data or assets', err);
+    document.getElementById('loadingScreen').innerHTML =
+      '<p style="color:#f88;font-family:Outfit,sans-serif;font-size:1rem">Failed to load data or assets.</p>';
+    return;
+  }
+  ui.hideLoading();
+  ui.showMenu();
+
   // ── Game objects ─────────────────────────────────────────────────
   const kicker     = new Kicker();
   kicker.addToScene(scene);
@@ -44,24 +63,6 @@ async function bootstrap() {
   trajectory.addToScene(scene);
 
   const particles  = new ParticleSystem(scene);
-
-  // ── Systems ──────────────────────────────────────────────────────
-  const ui    = new UIManager();
-  const quiz  = new Quiz();
-  const input = new Input(canvas);
-
-  // ── Load vocab data ───────────────────────────────────────────────
-  ui.showLoading();
-  try {
-    await quiz.load();
-  } catch (err) {
-    console.error('Failed to load data.json', err);
-    document.getElementById('loadingScreen').innerHTML =
-      '<p style="color:#f88;font-family:Outfit,sans-serif;font-size:1rem">Failed to load data.json – serve from a local server (npm run dev).</p>';
-    return;
-  }
-  ui.hideLoading();
-  ui.showMenu();
 
   // ── Camera base position (used for shake reset) ───────────────────
   const camBase = camera.position.clone();

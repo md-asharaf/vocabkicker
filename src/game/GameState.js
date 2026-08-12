@@ -285,16 +285,20 @@ export class GameState {
   }
 
   _reactGKs() {
-    if (this._savedBy) {
-      // Only the saving goalkeeper dives!
-      this._savedBy.dive(this._aimTarget.x, this._aimTarget.y);
-    } else if (this._missedBy) {
-      // The goalkeeper dives the WRONG WAY to make it look like a real penalty!
-      // If the ball is to their right, they dive left, and vice versa.
-      const diveDir = this._aimTarget.x > this._missedBy.group.position.x ? -1 : 1;
-      const fakeTargetX = this._missedBy.group.position.x + (diveDir * 2.5);
-      this._missedBy.dive(fakeTargetX, 0.5); // dive low and away from the ball
-    }
+    // Calculate exact ball position when it passes the goalkeepers
+    const gkPos = this._ball.getPosAtZ(GK_Z);
+
+    this._gks.forEach(gk => {
+      if (gk === this._savedBy) {
+        // Only the saving goalkeeper dives!
+        gk.dive(gkPos.x, gkPos.y);
+      } else if (gk === this._missedBy) {
+        // The goalkeeper dives TOWARDS the ball, but we still let it go in!
+        const diveDir = gkPos.x > gk.group.position.x ? 1 : -1;
+        const fakeTargetX = gk.group.position.x + (diveDir * 1.5); // Dive short of the ball
+        gk.dive(fakeTargetX, gkPos.y); 
+      }
+    });
   }
 
   _onBallLand() {

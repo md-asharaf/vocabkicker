@@ -22,10 +22,9 @@ export const GK_X = [
 export const BALL_POS = new THREE.Vector3(0, 0.22, 5.5);
 
 /**
- * Kicker starts LEFT and BEHIND the ball — right-footed penalty position.
- * In real football the kicker stands ~3–4 steps back and ~1–2 steps to the left.
+ * Kicker starts slightly behind the ball to match the 2-3 step animation runup.
  */
-export const KICKER_START = new THREE.Vector3(-1.8, 0, 9.8);
+export const KICKER_START = new THREE.Vector3(-0.1, 0, 7.3);
 
 /** Jersey colors per goalkeeper slot */
 export const GK_COLORS = [0xe74c3c, 0x3498db, 0xf39c12, 0x9b59b6];
