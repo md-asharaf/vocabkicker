@@ -34,8 +34,7 @@ html,body{width:100%;height:100%;height:100dvh;overflow:hidden;background:#0a0a0
 }
 .menuSub{color:#8fbc8f;font-size:clamp(.9rem,2.5vw,1.3rem);margin-bottom:.3rem;letter-spacing:1px}
 .menuTag{color:#556;font-size:clamp(.7rem,1.8vw,1rem);margin-bottom:2rem;font-style:italic}
-.menuBall{font-size:4.2rem;display:inline-block;animation:ballSpin 3s linear infinite;margin-bottom:.8rem}
-@keyframes ballSpin{to{transform:rotateY(360deg)}}
+.menuBall{font-size:4.2rem;display:inline-block;margin-bottom:.8rem}
 .menuBtn{
   padding:1rem 3.8rem;font-size:clamp(1rem,3vw,1.38rem);font-weight:800;
   background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;
@@ -165,9 +164,10 @@ html,body{width:100%;height:100%;height:100dvh;overflow:hidden;background:#0a0a0
 
 /* ─── Mobile Responsiveness ─────────────────────────────────────── */
 @media (max-width: 600px) {
-  #menuScreen h1 { font-size: 2.8rem; }
+  #menuScreen h1 { font-size: clamp(1.8rem, 11vw, 2.8rem); text-align: center; line-height: 1.2; letter-spacing: 1px; }
   .menuBtn { padding: 0.8rem 2rem; font-size: 1.1rem; }
-  .menuFeatures { flex-direction: column; align-items: center; gap: 0.5rem; }
+  .menuFeatures { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 0.5rem; width: 90%; }
+  .featBadge { font-size: 0.7rem; padding: 0.3rem 0.6rem; }
   
   #hud { padding: 0.4rem 0.6rem; flex-wrap: nowrap; }
   .hudLabel { font-size: 0.55rem; }
