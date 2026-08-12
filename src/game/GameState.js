@@ -295,17 +295,21 @@ export class GameState {
 
   _reactGKs() {
     // Calculate exact ball position when it passes the goalkeepers
-    const gkPos = this._ball.getPosAtZ(GK_Z);
+    const src = BALL_POS;
+    const dst = this._aimTarget;
+    const distance = src.distanceTo(dst);
+    const ctrlX = (src.x + dst.x) / 2 + this._curveFactor * Math.min(distance * 0.28, 2.4);
+    const t = (GK_Z - src.z) / (dst.z - src.z);
+    const mt = 1 - t;
+    const gkPassX = mt * mt * src.x + 2 * mt * t * ctrlX + t * t * dst.x;
 
     this._gks.forEach(gk => {
       if (gk === this._savedBy) {
         // Only the saving goalkeeper dives!
-        gk.dive(gkPos.x, gkPos.y);
+        gk.dive(gkPassX, this._aimTarget.y);
       } else if (gk === this._missedBy) {
-        // The goalkeeper dives TOWARDS the ball, but we still let it go in!
-        const diveDir = gkPos.x > gk.group.position.x ? 1 : -1;
-        const fakeTargetX = gk.group.position.x + (diveDir * 1.5); // Dive short of the ball
-        gk.dive(fakeTargetX, gkPos.y); 
+        // The correct goalkeeper is fooled and just plays the miss/shock animation!
+        gk.miss();
       }
     });
   }

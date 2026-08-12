@@ -27,11 +27,11 @@ export function initScene(canvas) {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-  renderer.shadowMap.enabled   = true;
-  renderer.shadowMap.type      = THREE.PCFSoftShadowMap;
-  renderer.toneMapping         = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
-  try { renderer.outputColorSpace = THREE.SRGBColorSpace; } catch (_) {}
+  try { renderer.outputColorSpace = THREE.SRGBColorSpace; } catch (_) { }
 
   return { scene, camera, renderer };
 }
@@ -40,7 +40,15 @@ export function initScene(canvas) {
 export function resizeScene() {
   if (!renderer || !camera) return;
   const w = window.innerWidth, h = window.innerHeight;
-  camera.aspect = w / h;
+  const aspect = w / h;
+
+  if (aspect < 1.0) {
+    camera.fov = 55 / aspect * 0.55; // widen vertical FOV for portrait (zoomed in a bit more)
+  } else {
+    camera.fov = 55;
+  }
+
+  camera.aspect = aspect;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h);
 }
