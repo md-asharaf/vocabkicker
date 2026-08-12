@@ -184,7 +184,7 @@ export class GameState {
     this._aimTarget.set(
       this._aimX * (GOAL_W * 0.46),
       this._aimY * GOAL_H,
-      -13.0,   // goal plane Z
+      -14.8,   // back of the net Z
     );
   }
 
@@ -254,15 +254,24 @@ export class GameState {
 
     const isInGoal = Math.abs(this._aimTarget.x) < GOAL_W / 2 && this._aimTarget.y < GOAL_H;
 
-    // Determine the closest GK
+    // Calculate the ball's exact curved X-coordinate when it crosses the GK line
+    const src = BALL_POS;
+    const dst = this._aimTarget;
+    const distance = src.distanceTo(dst);
+    const ctrlX = (src.x + dst.x) / 2 + this._curveFactor * Math.min(distance * 0.28, 2.4);
+    const t = (GK_Z - src.z) / (dst.z - src.z);
+    const mt = 1 - t;
+    const gkPassX = mt * mt * src.x + 2 * mt * t * ctrlX + t * t * dst.x;
+
+    // Determine the closest GK using the exact passing coordinate
     let closestGk = this._gks[0], minDist = Infinity;
     this._gks.forEach(gk => {
-      const dist = Math.abs(this._aimTarget.x - gk.group.position.x);
-      if (dist < minDist) { minDist = dist; closestGk = gk; }
+      const d = Math.abs(gkPassX - gk.group.position.x);
+      if (d < minDist) { minDist = d; closestGk = gk; }
     });
 
     const isWrongGk = !closestGk.isCorrect;
-    const canCatch = minDist < (GOAL_W / 4 + 0.6);
+    const canCatch = minDist < (GOAL_W / 4 + 0.6) && isInGoal;
 
     // Wrong GKs definitely stop and catch balls near them.
     // Right GK NEVER stops the ball.
@@ -302,7 +311,19 @@ export class GameState {
   }
 
   _onBallLand() {
-    const isInGoal = Math.abs(this._aimTarget.x) < GOAL_W / 2 && this._aimTarget.y < GOAL_H;
+    // Check if the ball's EXACT end position is inside the goal mouth.
+    // Use the actual gkPassX since the curve might put it out of bounds even if aimTarget wasn't.
+    const src = BALL_POS;
+    const dst = this._aimTarget;
+    const distance = src.distanceTo(dst);
+    const ctrlX = (src.x + dst.x) / 2 + this._curveFactor * Math.min(distance * 0.28, 2.4);
+    
+    // Evaluate Bezier X at the goal plane (Z = -13.0)
+    const t = (GK_Z - src.z) / (dst.z - src.z);
+    const mt = 1 - t;
+    const gkPassX = mt * mt * src.x + 2 * mt * t * ctrlX + t * t * dst.x;
+
+    const isInGoal = Math.abs(gkPassX) <= GOAL_W / 2 && this._aimTarget.y <= GOAL_H;
 
     let correct = false;
     let pts = PTS_WRONG;

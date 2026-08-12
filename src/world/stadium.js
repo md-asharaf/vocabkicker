@@ -28,56 +28,7 @@ export function createStadium(scene) {
     scene.add(m);
   });
 
-  // ── Crowd (low-poly spectators) ───────────────────────────────────
-  const CROWD_COLORS = [0xe74c3c, 0x3498db, 0xf39c12, 0x22c55e, 0xffffff, 0xff8c00, 0x9b59b6];
-  const COUNT        = 400; // Increased count for density
-
-  // Body mesh
-  const bodyGeo = new THREE.BoxGeometry(0.35, 0.45, 0.25);
-  const iBody   = new THREE.InstancedMesh(bodyGeo, new THREE.MeshLambertMaterial(), COUNT);
-  
-  // Head mesh
-  const headGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2); // boxy heads look good from far away
-  const iHead   = new THREE.InstancedMesh(headGeo, new THREE.MeshLambertMaterial(), COUNT);
-
-  const dummyBody = new THREE.Object3D();
-  const dummyHead = new THREE.Object3D();
-  
-  for (let i = 0; i < COUNT; i++) {
-    const row = Math.floor(i / 80);
-    const col = i % 80;
-    
-    // Slight random offset to make crowd look less perfectly aligned
-    const ox = (Math.random() - 0.5) * 0.2;
-    const oy = (Math.random() - 0.5) * 0.1;
-    
-    const bx = -18.5 + col * 0.48 + ox;
-    const by = 1.6 + row * 1.1 + oy;
-    const bz = -26.5;
-
-    dummyBody.position.set(bx, by, bz);
-    dummyBody.updateMatrix();
-    iBody.setMatrixAt(i, dummyBody.matrix);
-    
-    dummyHead.position.set(bx, by + 0.35, bz);
-    dummyHead.updateMatrix();
-    iHead.setMatrixAt(i, dummyHead.matrix);
-
-    const c = new THREE.Color(CROWD_COLORS[Math.floor(Math.random() * CROWD_COLORS.length)]);
-    iBody.setColorAt(i, c);
-    
-    // Skin tones for heads
-    const skins = [0xffdbac, 0xf1c27d, 0xe0ac69, 0x8d5524, 0xc68642];
-    iHead.setColorAt(i, new THREE.Color(skins[Math.floor(Math.random() * skins.length)]));
-  }
-  
-  iBody.instanceMatrix.needsUpdate = true;
-  iHead.instanceMatrix.needsUpdate = true;
-  if (iBody.instanceColor) iBody.instanceColor.needsUpdate = true;
-  if (iHead.instanceColor) iHead.instanceColor.needsUpdate = true;
-  
-  scene.add(iBody);
-  scene.add(iHead);
+  // Crowd removed as requested
 
   // ── Floodlight poles ─────────────────────────────────────────────
   const poleMat = new THREE.MeshLambertMaterial({ color: 0x999999 });

@@ -56,8 +56,8 @@ export class Input {
     const dx = cx - this._startX;
     const dy = this._startY - cy;          // up = positive
 
-    const aimX  = this._clamp(dx / DRAG_SCALE_X, -1, 1);
-    const aimY  = this._clamp(0.45 + dy / DRAG_SCALE_Y, 0.08, 0.97);
+    const aimX  = this._clamp(dx / DRAG_SCALE_X, -1.6, 1.6);
+    const aimY  = this._clamp(0.45 + dy / DRAG_SCALE_Y, -0.2, 1.6);
     const power = this._clamp(Math.hypot(dx, dy) / 200, 0, 1);
 
     // Calculate curve based on horizontal deviation from straight path
