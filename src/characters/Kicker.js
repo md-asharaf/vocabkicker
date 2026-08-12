@@ -23,6 +23,26 @@ export class Kicker {
 
   _build() {
     const model = SkeletonUtils.clone(assetManager.models['kicker']);
+    
+    // Tint the Kicker (Striker) to a distinct color (e.g., White/Light Gray)
+    model.traverse((child) => {
+      if (child.isMesh && child.material) {
+        const name = child.name.toLowerCase();
+        if (name.includes('body') || name.includes('shirt') || name.includes('beta_surface')) {
+          if (Array.isArray(child.material)) {
+            child.material = child.material.map(m => {
+              const newMat = m.clone();
+              newMat.color.setHex(0xeeeeee); // Light gray / white
+              return newMat;
+            });
+          } else {
+            child.material = child.material.clone();
+            child.material.color.setHex(0xeeeeee);
+          }
+        }
+      }
+    });
+
     this.group.add(model);
     
     // Setup animation

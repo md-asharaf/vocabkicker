@@ -71,11 +71,17 @@ export class Goalkeeper {
     // Change shirt color (tint the main material if possible)
     model.traverse((child) => {
       if (child.isMesh && child.material) {
-        // Simple way to tint the goalkeeper to match colorHex
-        if (child.name.toLowerCase().includes('body') || child.name.toLowerCase().includes('shirt')) {
+        const name = child.name.toLowerCase();
+        // Tint the Beta dummy surfaces
+        if (name.includes('body') || name.includes('shirt') || name.includes('beta_surface')) {
           if (Array.isArray(child.material)) {
-            child.material.forEach(m => m.color.setHex(this.colorHex));
+            child.material = child.material.map(m => {
+              const newMat = m.clone();
+              newMat.color.setHex(this.colorHex);
+              return newMat;
+            });
           } else {
+            child.material = child.material.clone();
             child.material.color.setHex(this.colorHex);
           }
         }
