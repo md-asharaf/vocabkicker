@@ -33,7 +33,7 @@ Built with Three.js, this web-based mini-game turns learning vocabulary and mnem
 
 ## Adding Custom Words
 
-You can easily modify the words and mnemonics by editing the `data.json` file in the root directory.
+You can easily modify the words and mnemonics by logging into the Admin Dashboard (`/admin`) using your credentials. All data is securely stored in a database (AWS DynamoDB).
 
 ## Controls
 

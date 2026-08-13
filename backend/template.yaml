@@ -1,0 +1,185 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: VocabKicker Serverless Backend with Spring Cloud Function
+
+Parameters:
+  JwtSecret:
+    Type: String
+    Description: "Secret key for JWT generation (must be at least 32 characters)"
+    NoEcho: true
+
+Globals:
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'Content-Type,Authorization,Cookie'"
+      AllowOrigin: "'https://vocabkicker.vercel.app'"
+      AllowCredentials: true
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: java17
+    Handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
+    CodeUri: target/serverless-0.0.1-SNAPSHOT-aws.jar
+    Environment:
+      Variables:
+        JWT_SECRET: !Ref JwtSecret
+        MAIN_CLASS: com.vocabkicker.serverless.VocabKickerServerlessApplication
+
+Resources:
+  QuestionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Questions
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Users
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  AdminLoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: adminLogin
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /admin/login
+            Method: post
+
+  CreateAdminFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: createAdmin
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /admin/register
+            Method: post
+
+  AdminRefreshFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: adminRefresh
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /admin/refresh
+            Method: post
+
+  GetQuestionsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: getQuestions
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref QuestionsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /questions
+            Method: get
+
+  GenerateQuizFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: generateQuiz
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref QuestionsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /quiz/generate
+            Method: get
+
+  GetQuestionByIdFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: getQuestionById
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref QuestionsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /questions/{id}
+            Method: get
+
+  CreateQuestionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: createQuestion
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref QuestionsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /questions
+            Method: post
+
+  DeleteQuestionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: deleteQuestion
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref QuestionsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /questions/{id}
+            Method: delete
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
