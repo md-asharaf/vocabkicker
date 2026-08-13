@@ -271,8 +271,9 @@ export default function AdminClient() {
           <button
             onClick={handlePrev}
             disabled={currentIndex === 0 || isLoading}
-            className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors font-medium border border-slate-600/50"
+            className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors font-medium border border-slate-600/50 flex items-center gap-2"
           >
+            {isLoading && <Spinner className="h-4 w-4" />}
             Previous
           </button>
           <span className="text-sm font-medium text-slate-400 bg-slate-900/50 px-3 py-1 rounded-full border border-slate-700/50">
@@ -284,6 +285,7 @@ export default function AdminClient() {
             className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors flex items-center gap-2 font-medium border border-slate-600/50"
           >
             Next
+            {isLoading && <Spinner className="h-4 w-4" />}
           </button>
         </div>
       </div>
