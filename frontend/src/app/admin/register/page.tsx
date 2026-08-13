@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { registerAction } from '../../actions/auth';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 const Spinner = ({ className = "h-5 w-5" }: { className?: string }) => (
   <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -21,7 +22,11 @@ export default function RegisterPage() {
     const res = await registerAction(formData);
     if (res?.error) {
         setError(res.error);
+        toast.error(res.error);
         setLoading(false);
+    } else {
+        toast.success('Admin created successfully! Redirecting...');
+        // setLoading(false) isn't called to keep spinner spinning during redirect
     }
   }
 

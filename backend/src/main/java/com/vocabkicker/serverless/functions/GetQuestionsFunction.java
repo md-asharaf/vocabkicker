@@ -33,6 +33,8 @@ public class GetQuestionsFunction implements Function<APIGatewayProxyRequestEven
             int limit = 10;
             String lastEvaluatedKeyId = null;
 
+            String search = null;
+
             if (queryParams != null) {
                 if (queryParams.containsKey("limit")) {
                     try {
@@ -41,6 +43,9 @@ public class GetQuestionsFunction implements Function<APIGatewayProxyRequestEven
                 }
                 if (queryParams.containsKey("lastEvaluatedKey") && !queryParams.get("lastEvaluatedKey").isEmpty()) {
                     lastEvaluatedKeyId = queryParams.get("lastEvaluatedKey");
+                }
+                if (queryParams.containsKey("search") && !queryParams.get("search").trim().isEmpty()) {
+                    search = queryParams.get("search").trim();
                 }
             }
 
@@ -52,11 +57,20 @@ public class GetQuestionsFunction implements Function<APIGatewayProxyRequestEven
 
             final Map<String, AttributeValue> finalExclusiveStartKey = exclusiveStartKey;
             final int finalLimit = limit;
+            final String finalSearch = search;
             
             Page<Question> firstPage = questionTable.scan(r -> {
                 r.limit(finalLimit);
                 if (finalExclusiveStartKey != null) {
                     r.exclusiveStartKey(finalExclusiveStartKey);
+                }
+                if (finalSearch != null) {
+                    software.amazon.awssdk.enhanced.dynamodb.Expression filterExpr = 
+                        software.amazon.awssdk.enhanced.dynamodb.Expression.builder()
+                            .expression("contains(word, :s) OR contains(definition, :s)")
+                            .putExpressionValue(":s", AttributeValue.builder().s(finalSearch).build())
+                            .build();
+                    r.filterExpression(filterExpr);
                 }
             }).stream().findFirst().orElse(null);
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { loginAction } from '../../actions/auth';
+import toast from 'react-hot-toast';
 
 const Spinner = ({ className = "h-5 w-5" }: { className?: string }) => (
   <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -20,7 +21,11 @@ export default function LoginPage() {
         const res = await loginAction(formData);
         if (res?.error) {
             setError(res.error);
+            toast.error(res.error);
             setLoading(false);
+        } else {
+            toast.success('Logged in successfully!');
+            // setLoading(false) isn't called because it redirects, keeping the spinner active
         }
     }
 

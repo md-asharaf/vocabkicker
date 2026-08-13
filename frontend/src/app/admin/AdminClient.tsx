@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createQuestionAction, deleteQuestionAction, updateQuestionAction } from '../actions/questions';
+import toast from 'react-hot-toast';
 
 type Question = {
   id: string;
@@ -21,6 +22,8 @@ export default function AdminClient() {
   // Data State
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
 
   // Form State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -38,13 +41,14 @@ export default function AdminClient() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [nextKey, setNextKey] = useState<string | null>(null);
 
-  const fetchQuestions = async (key: string | null) => {
+  const fetchQuestions = async (key: string | null, search: string) => {
     setIsLoading(true);
     try {
       const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
       const url = new URL(`${baseUrl}/questions`);
       url.searchParams.set('limit', '10');
       if (key) url.searchParams.set('lastEvaluatedKey', key);
+      if (search.trim()) url.searchParams.set('search', search.trim());
 
       const res = await fetch(url.toString(), { cache: 'no-store' });
       if (res.ok) {
@@ -52,17 +56,26 @@ export default function AdminClient() {
         setQuestions(data.items || []);
         setNextKey(data.lastEvaluatedKey || null);
       } else {
+        toast.error('Failed to fetch questions');
         console.error('Failed to fetch questions');
       }
     } catch (err) {
+      toast.error('Network error fetching questions');
       console.error('Error fetching questions', err);
     }
     setIsLoading(false);
   };
 
   useEffect(() => {
-    fetchQuestions(pageHistory[currentIndex]);
-  }, [currentIndex]);
+    fetchQuestions(pageHistory[currentIndex], activeSearch);
+  }, [currentIndex, activeSearch]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPageHistory([null]);
+    setCurrentIndex(0);
+    setActiveSearch(searchQuery);
+  };
 
   const handleNext = () => {
     if (nextKey) {
@@ -111,29 +124,46 @@ export default function AdminClient() {
     formData.append('mnemonic', mnemonic);
     formData.append('definition', definition);
 
-    if (editId) {
-      await updateQuestionAction(editId, formData);
-    } else {
-      await createQuestionAction(formData);
+    try {
+      if (editId) {
+        const res = await updateQuestionAction(editId, formData);
+        if (res?.error) throw new Error(res.error);
+        toast.success('Question updated successfully!');
+      } else {
+        const res = await createQuestionAction(formData);
+        if (res?.error) throw new Error(res.error);
+        toast.success('Question created successfully!');
+      }
+
+      setIsFormModalOpen(false);
+      setEditId(null);
+      setWord('');
+      setMnemonic('');
+      setDefinition('');
+
+      // Refresh the current page
+      fetchQuestions(pageHistory[currentIndex], activeSearch);
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred');
+    } finally {
+      setIsPending(false);
     }
-
-    setIsFormModalOpen(false);
-    setEditId(null);
-    setWord('');
-    setMnemonic('');
-    setDefinition('');
-    setIsPending(false);
-
-    fetchQuestions(pageHistory[currentIndex]);
   };
 
   const confirmDelete = async () => {
     if (deleteId) {
       setIsPending(true);
-      await deleteQuestionAction(deleteId);
-      setDeleteId(null);
-      setIsPending(false);
-      fetchQuestions(pageHistory[currentIndex]);
+      try {
+        const res = await deleteQuestionAction(deleteId);
+        if (res?.error) throw new Error(res.error);
+        toast.success('Question deleted successfully!');
+        setDeleteId(null);
+        fetchQuestions(pageHistory[currentIndex], activeSearch);
+      } catch (error: any) {
+        toast.error(error.message || 'An error occurred deleting the question');
+      } finally {
+        setIsPending(false);
+      }
     }
   };
 
@@ -141,12 +171,24 @@ export default function AdminClient() {
     <div className="w-full max-w-6xl mx-auto space-y-8">
       {/* Table Section */}
       <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-lg flex flex-col relative min-h-[400px]">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h2 className="text-2xl font-bold text-white flex items-center gap-3 tracking-tight">
             Questions Bank
             {isLoading && <Spinner className="h-5 w-5 text-blue-400" />}
           </h2>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <form onSubmit={handleSearchSubmit} className="flex-1 md:w-64 flex relative">
+              <input
+                type="text"
+                placeholder="Search words..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 text-white rounded-l-md px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+              />
+              <button type="submit" className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-r-md transition-colors border border-l-0 border-slate-700 flex items-center justify-center">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </button>
+            </form>
             <a href="/admin/register" className="text-sm bg-slate-700/50 text-slate-300 border border-slate-700 px-4 py-2 rounded-md hover:bg-slate-700 hover:text-white transition-colors font-medium">
               New Admin
             </a>
@@ -201,7 +243,9 @@ export default function AdminClient() {
                   <td colSpan={4} className="text-center py-16 text-slate-500">
                     <div className="flex flex-col items-center gap-3">
                       <svg className="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                      <p className="font-medium">No questions found. Add one!</p>
+                      <p className="font-medium">
+                        {activeSearch ? 'No questions match your search.' : 'No questions found. Add one!'}
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -244,7 +288,7 @@ export default function AdminClient() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <div>
                 <label className="block text-sm font-medium mb-1.5 text-slate-300">Word</label>
@@ -270,7 +314,7 @@ export default function AdminClient() {
                   value={definition} onChange={e => setDefinition(e.target.value)} required
                 />
               </div>
-              
+
               <div className="flex justify-end gap-3 mt-4 pt-5 border-t border-slate-800">
                 <button type="button" onClick={cancelEdit} disabled={isPending} className="px-4 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors disabled:opacity-50 border border-transparent hover:border-slate-700">
                   Cancel
