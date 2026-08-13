@@ -111,6 +111,33 @@ export async function createQuestionAction(formData: FormData) {
   }
 }
 
+export async function updateQuestionAction(id: string, formData: FormData) {
+  const word = formData.get('word');
+  const mnemonic = formData.get('mnemonic');
+  const definition = formData.get('definition');
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  const cookieStore = await cookies();
+  const token = cookieStore.get('admin_token');
+
+  if (!token) {
+    redirect('/admin/login');
+  }
+
+  const res = await fetch(`${apiUrl}/questions/${id}`, {
+    method: 'PUT',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Cookie': `admin_token=${token.value}`
+    },
+    body: JSON.stringify({ word, mnemonic, definition }),
+  });
+
+  if (!res.ok) {
+    return { error: 'Failed to update question. ' + await res.text() };
+  }
+}
+
 export async function deleteQuestionAction(id: string) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
   const cookieStore = await cookies();
