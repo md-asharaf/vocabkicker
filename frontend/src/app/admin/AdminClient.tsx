@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createQuestionAction, deleteQuestionAction, updateQuestionAction } from '../actions/questions';
 import { useRouter } from 'next/navigation';
 
@@ -11,8 +11,12 @@ type Question = {
   definition: string;
 };
 
-export default function AdminClient({ initialQuestions }: { initialQuestions: Question[] }) {
+export default function AdminClient() {
   const router = useRouter();
+  
+  // Data State
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Form State
   const [editId, setEditId] = useState<string | null>(null);
@@ -24,16 +28,50 @@ export default function AdminClient({ initialQuestions }: { initialQuestions: Qu
   const [isPending, setIsPending] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  
-  // Compute Pagination
-  const totalPages = Math.ceil(initialQuestions.length / itemsPerPage);
-  const paginatedQuestions = initialQuestions.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Server-Side Pagination State
+  const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [nextKey, setNextKey] = useState<string | null>(null);
+
+  const fetchQuestions = async (key: string | null) => {
+    setIsLoading(true);
+    try {
+      const url = new URL('/questions', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080');
+      url.searchParams.set('limit', '10');
+      if (key) url.searchParams.set('lastEvaluatedKey', key);
+      
+      const res = await fetch(url.toString(), { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setQuestions(data.items || []);
+        setNextKey(data.lastEvaluatedKey || null);
+      } else {
+        console.error('Failed to fetch questions');
+      }
+    } catch (err) {
+      console.error('Error fetching questions', err);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchQuestions(pageHistory[currentIndex]);
+  }, [currentIndex]);
+
+  const handleNext = () => {
+    if (nextKey) {
+      if (currentIndex === pageHistory.length - 1) {
+        setPageHistory([...pageHistory, nextKey]);
+      }
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +92,9 @@ export default function AdminClient({ initialQuestions }: { initialQuestions: Qu
     setMnemonic('');
     setDefinition('');
     setIsPending(false);
-    router.refresh();
+    
+    // Refresh current page data after mutation
+    fetchQuestions(pageHistory[currentIndex]);
   };
 
   const handleEdit = (q: Question) => {
@@ -71,17 +111,13 @@ export default function AdminClient({ initialQuestions }: { initialQuestions: Qu
     setDefinition('');
   };
 
-  const handleDelete = async (id: string) => {
-    setDeleteId(id);
-  };
-
   const confirmDelete = async () => {
     if (deleteId) {
         setIsPending(true);
         await deleteQuestionAction(deleteId);
         setDeleteId(null);
         setIsPending(false);
-        router.refresh();
+        fetchQuestions(pageHistory[currentIndex]);
     }
   };
 
@@ -136,7 +172,7 @@ export default function AdminClient({ initialQuestions }: { initialQuestions: Qu
       <div className="md:col-span-2 bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-lg flex flex-col">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-white">Questions Bank</h2>
-          <div className="text-sm text-slate-400">Total: {initialQuestions.length}</div>
+          {isLoading && <div className="text-sm text-blue-400 animate-pulse">Loading...</div>}
         </div>
         
         <div className="overflow-x-auto flex-1">
@@ -150,7 +186,7 @@ export default function AdminClient({ initialQuestions }: { initialQuestions: Qu
               </tr>
             </thead>
             <tbody>
-              {paginatedQuestions.map(q => (
+              {questions.map(q => (
                 <tr key={q.id} className="border-b border-slate-700/50 hover:bg-slate-700/20 transition-colors">
                   <td className="py-3 px-2 font-medium text-white">{q.word}</td>
                   <td className="py-3 px-2">{q.mnemonic}</td>
@@ -159,13 +195,13 @@ export default function AdminClient({ initialQuestions }: { initialQuestions: Qu
                     <button onClick={() => handleEdit(q)} className="text-blue-400 hover:text-blue-300 transition-colors text-sm mr-3">
                       Edit
                     </button>
-                    <button onClick={() => handleDelete(q.id)} className="text-red-400 hover:text-red-300 transition-colors text-sm">
+                    <button onClick={() => setDeleteId(q.id)} className="text-red-400 hover:text-red-300 transition-colors text-sm">
                       Delete
                     </button>
                   </td>
                 </tr>
               ))}
-              {initialQuestions.length === 0 && (
+              {!isLoading && questions.length === 0 && (
                 <tr>
                   <td colSpan={4} className="text-center py-12 text-slate-500">No questions found. Add one!</td>
                 </tr>
@@ -174,28 +210,26 @@ export default function AdminClient({ initialQuestions }: { initialQuestions: Qu
           </table>
         </div>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-700">
-            <button 
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors"
-            >
-              Previous
-            </button>
-            <span className="text-sm text-slate-400">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button 
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors"
-            >
-              Next
-            </button>
-          </div>
-        )}
+        {/* Server-Side Pagination Controls */}
+        <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-700">
+          <button 
+            onClick={handlePrev}
+            disabled={currentIndex === 0 || isLoading}
+            className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-slate-400">
+            Page {currentIndex + 1}
+          </span>
+          <button 
+            onClick={handleNext}
+            disabled={!nextKey || isLoading}
+            className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {/* Delete Modal */}
