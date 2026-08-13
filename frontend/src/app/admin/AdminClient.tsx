@@ -11,6 +11,13 @@ type Question = {
   definition: string;
 };
 
+const Spinner = ({ className = "h-5 w-5" }: { className?: string }) => (
+  <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
+
 export default function AdminClient() {
   // Data State
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -153,7 +160,8 @@ export default function AdminClient() {
             />
           </div>
           <div className="flex gap-3 mt-2">
-            <button type="submit" disabled={isPending} className="flex-1 bg-blue-600 text-white py-2.5 rounded-md hover:bg-blue-500 transition-colors disabled:opacity-50 font-medium">
+            <button type="submit" disabled={isPending} className="flex-1 bg-blue-600 text-white py-2.5 rounded-md hover:bg-blue-500 transition-colors disabled:opacity-50 font-medium flex items-center justify-center gap-2">
+              {isPending && <Spinner className="h-4 w-4 text-white" />}
               {isPending ? 'Saving...' : (editId ? 'Update' : 'Save')}
             </button>
             {editId && (
@@ -166,10 +174,12 @@ export default function AdminClient() {
       </div>
 
       {/* Table Section */}
-      <div className="md:col-span-2 bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-lg flex flex-col">
+      <div className="md:col-span-2 bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-lg flex flex-col relative min-h-[400px]">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-white">Questions Bank</h2>
-          {isLoading && <div className="text-sm text-blue-400 animate-pulse">Loading...</div>}
+          <h2 className="text-xl font-semibold text-white flex items-center gap-3">
+            Questions Bank
+            {isLoading && <Spinner className="h-5 w-5 text-blue-400" />}
+          </h2>
         </div>
 
         <div className="overflow-x-auto flex-1">
@@ -182,25 +192,44 @@ export default function AdminClient() {
                 <th className="py-3 px-2 font-medium text-slate-400 w-32 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className={isLoading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
               {questions.map(q => (
                 <tr key={q.id} className="border-b border-slate-700/50 hover:bg-slate-700/20 transition-colors">
                   <td className="py-3 px-2 font-medium text-white">{q.word}</td>
                   <td className="py-3 px-2">{q.mnemonic}</td>
                   <td className="py-3 px-2 text-sm text-slate-400">{q.definition}</td>
-                  <td className="py-3 px-2 text-right">
-                    <button onClick={() => handleEdit(q)} className="text-blue-400 hover:text-blue-300 transition-colors text-sm mr-3">
+                  <td className="py-3 px-2 text-right whitespace-nowrap">
+                    <button onClick={() => handleEdit(q)} className="text-blue-400 hover:text-blue-300 transition-colors text-sm mr-3 font-medium">
                       Edit
                     </button>
-                    <button onClick={() => setDeleteId(q.id)} className="text-red-400 hover:text-red-300 transition-colors text-sm">
+                    <button onClick={() => setDeleteId(q.id)} className="text-red-400 hover:text-red-300 transition-colors text-sm font-medium">
                       Delete
                     </button>
                   </td>
                 </tr>
               ))}
+              
+              {/* Skeleton Loaders for empty state during loading */}
+              {isLoading && questions.length === 0 && (
+                [...Array(5)].map((_, i) => (
+                  <tr key={`skel-${i}`} className="border-b border-slate-700/50">
+                    <td className="py-4 px-2"><div className="h-4 bg-slate-700/50 rounded w-24 animate-pulse"></div></td>
+                    <td className="py-4 px-2"><div className="h-4 bg-slate-700/50 rounded w-32 animate-pulse"></div></td>
+                    <td className="py-4 px-2"><div className="h-4 bg-slate-700/50 rounded w-full max-w-md animate-pulse"></div></td>
+                    <td className="py-4 px-2"><div className="h-4 bg-slate-700/50 rounded w-16 ml-auto animate-pulse"></div></td>
+                  </tr>
+                ))
+              )}
+
+              {/* Empty State */}
               {!isLoading && questions.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="text-center py-12 text-slate-500">No questions found. Add one!</td>
+                  <td colSpan={4} className="text-center py-16 text-slate-500">
+                    <div className="flex flex-col items-center gap-2">
+                      <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                      <p>No questions found. Add one!</p>
+                    </div>
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -222,7 +251,7 @@ export default function AdminClient() {
           <button
             onClick={handleNext}
             disabled={!nextKey || isLoading}
-            className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors"
+            className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors flex items-center gap-2"
           >
             Next
           </button>
@@ -246,8 +275,9 @@ export default function AdminClient() {
               <button
                 onClick={confirmDelete}
                 disabled={isPending}
-                className="px-4 py-2 rounded bg-red-600 hover:bg-red-500 text-white transition-colors disabled:opacity-50 font-medium shadow-lg shadow-red-900/20"
+                className="px-4 py-2 rounded bg-red-600 hover:bg-red-500 text-white transition-colors disabled:opacity-50 font-medium shadow-lg shadow-red-900/20 flex items-center justify-center gap-2"
               >
+                {isPending && <Spinner className="h-4 w-4 text-white" />}
                 {isPending ? 'Deleting...' : 'Delete'}
               </button>
             </div>
