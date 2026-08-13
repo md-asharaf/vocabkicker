@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { createQuestionAction, deleteQuestionAction, updateQuestionAction } from '../actions/questions';
-import { useRouter } from 'next/navigation';
 
 type Question = {
   id: string;
@@ -41,7 +40,8 @@ export default function AdminClient() {
   const fetchQuestions = async (key: string | null) => {
     setIsLoading(true);
     try {
-      const url = new URL('/questions', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080');
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
+      const url = new URL(`${baseUrl}/questions`);
       url.searchParams.set('limit', '10');
       if (key) url.searchParams.set('lastEvaluatedKey', key);
 
@@ -208,7 +208,7 @@ export default function AdminClient() {
                   </td>
                 </tr>
               ))}
-              
+
               {/* Skeleton Loaders for empty state during loading */}
               {isLoading && questions.length === 0 && (
                 [...Array(5)].map((_, i) => (
