@@ -16,10 +16,10 @@ import { GameStatus } from '../../../types/game';
 import { assetManager } from './AssetManager';
 
 export interface GameController {
-  startGame: () => void;
+  startGame: () => Promise<void>;
   pause: () => void;
   resume: () => void;
-  restart: () => void;
+  restart: () => Promise<void>;
 }
 
 export async function bootstrap(canvas: HTMLCanvasElement, onUpdate: (status: GameStatus) => void): Promise<GameController> {
@@ -37,10 +37,9 @@ export async function bootstrap(canvas: HTMLCanvasElement, onUpdate: (status: Ga
   const input = new Input(canvas);
 
   try {
-    await quiz.load();
     await assetManager.loadAll(null); // Wait for FBX files to load
   } catch (err) {
-    console.error('Failed to load data or assets', err);
+    console.error('Failed to load assets', err);
     throw err;
   }
 
@@ -84,7 +83,10 @@ export async function bootstrap(canvas: HTMLCanvasElement, onUpdate: (status: Ga
   animate();
 
   return {
-    startGame: () => gameState.startGame(),
+    startGame: async () => {
+      await quiz.load();
+      gameState.startGame();
+    },
     pause: () => {
       isPaused = true;
       input.enabled = false;
@@ -93,9 +95,10 @@ export async function bootstrap(canvas: HTMLCanvasElement, onUpdate: (status: Ga
       isPaused = false;
       input.enabled = true;
     },
-    restart: () => {
+    restart: async () => {
       isPaused = false;
       input.enabled = true;
+      await quiz.load();
       gameState.startGame();
     }
   };

@@ -38,9 +38,11 @@ export default function GameCanvas() {
     }
   }, []);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     setShowMenu(false);
-    controller.current?.startGame();
+    setLoading(true);
+    await controller.current?.startGame();
+    setLoading(false);
   };
 
   const handleMenu = () => {
@@ -65,7 +67,12 @@ export default function GameCanvas() {
           <ControlsHUD
             onPause={() => controller.current?.pause()}
             onResume={() => controller.current?.resume()}
-            onRestart={() => controller.current?.restart()}
+            onRestart={async () => {
+              setLoading(true);
+              setStatus(null);
+              await controller.current?.restart();
+              setLoading(false);
+            }}
           />
           {status.question && <QuestionCard question={status.question} />}
         </>
