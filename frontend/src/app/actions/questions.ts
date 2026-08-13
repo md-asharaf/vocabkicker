@@ -153,6 +153,6 @@ export async function deleteQuestionAction(id: string) {
   });
 
   if (!res.ok) {
-    throw new Error('Failed to delete question');
+    return { error: 'Failed to delete question' };
   }
 }
