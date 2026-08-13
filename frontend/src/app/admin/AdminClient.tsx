@@ -70,6 +70,18 @@ export default function AdminClient() {
     fetchQuestions(pageHistory[currentIndex], activeSearch);
   }, [currentIndex, activeSearch]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery !== activeSearch) {
+        setPageHistory([null]);
+        setCurrentIndex(0);
+        setActiveSearch(searchQuery);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, activeSearch]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPageHistory([null]);
