@@ -3,7 +3,6 @@ package com.vocabkicker.serverless.functions;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vocabkicker.serverless.model.LoginResponse;
 import com.vocabkicker.serverless.model.RefreshRequest;
 import com.vocabkicker.serverless.model.User;
 import com.vocabkicker.serverless.utils.CorsHelper;
