@@ -107,7 +107,14 @@ export async function createQuestionAction(formData: FormData) {
   });
 
   if (!res.ok) {
-    return { error: 'Failed to create question. ' + await res.text() };
+    let errorMsg = 'Please try again later.';
+    try {
+      const errorData = await res.json();
+      if (errorData.error) errorMsg = errorData.error;
+    } catch {
+      // Ignore parsing error
+    }
+    return { error: `Failed to create question. ${errorMsg}` };
   }
 }
 
@@ -134,7 +141,14 @@ export async function updateQuestionAction(id: string, formData: FormData) {
   });
 
   if (!res.ok) {
-    return { error: 'Failed to update question. ' + await res.text() };
+    let errorMsg = 'Please try again later.';
+    try {
+      const errorData = await res.json();
+      if (errorData.error) errorMsg = errorData.error;
+    } catch {
+      // Ignore parsing error
+    }
+    return { error: `Failed to update question. ${errorMsg}` };
   }
 }
 
@@ -153,6 +167,13 @@ export async function deleteQuestionAction(id: string) {
   });
 
   if (!res.ok) {
-    return { error: 'Failed to delete question' };
+    let errorMsg = 'Please try again later.';
+    try {
+      const errorData = await res.json();
+      if (errorData.error) errorMsg = errorData.error;
+    } catch {
+      // Ignore parsing error
+    }
+    return { error: `Failed to delete question. ${errorMsg}` };
   }
 }

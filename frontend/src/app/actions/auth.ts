@@ -72,7 +72,14 @@ export async function registerAction(formData: FormData) {
     });
 
     if (!res.ok) {
-      return { error: 'Failed to create admin. ' + await res.text() };
+      let errorMsg = 'Please try again later.';
+      try {
+        const errorData = await res.json();
+        if (errorData.error) errorMsg = errorData.error;
+      } catch {
+        // Ignore parse error
+      }
+      return { error: `Failed to create admin. ${errorMsg}` };
     }
     
     redirect('/admin');
