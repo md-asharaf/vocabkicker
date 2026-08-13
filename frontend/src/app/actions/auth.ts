@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { fetchWithAuth } from '../../lib/api';
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email');
@@ -58,16 +59,11 @@ export async function registerAction(formData: FormData) {
   const password = formData.get('password');
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token');
 
   try {
-    const res = await fetch(`${apiUrl}/admin/register`, {
+    const res = await fetchWithAuth(`${apiUrl}/admin/register`, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        ...(token ? { 'Cookie': `admin_token=${token.value}` } : {})
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
 
