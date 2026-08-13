@@ -12,22 +12,20 @@ type Question = {
 };
 
 export default function AdminClient() {
-  const router = useRouter();
-  
   // Data State
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Form State
   const [editId, setEditId] = useState<string | null>(null);
   const [word, setWord] = useState('');
   const [mnemonic, setMnemonic] = useState('');
   const [definition, setDefinition] = useState('');
-  
+
   // UI State
   const [isPending, setIsPending] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  
+
   // Server-Side Pagination State
   const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -39,7 +37,7 @@ export default function AdminClient() {
       const url = new URL('/questions', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080');
       url.searchParams.set('limit', '10');
       if (key) url.searchParams.set('lastEvaluatedKey', key);
-      
+
       const res = await fetch(url.toString(), { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
@@ -80,20 +78,19 @@ export default function AdminClient() {
     formData.append('word', word);
     formData.append('mnemonic', mnemonic);
     formData.append('definition', definition);
-    
+
     if (editId) {
       await updateQuestionAction(editId, formData);
     } else {
       await createQuestionAction(formData);
     }
-    
+
     setEditId(null);
     setWord('');
     setMnemonic('');
     setDefinition('');
     setIsPending(false);
-    
-    // Refresh current page data after mutation
+
     fetchQuestions(pageHistory[currentIndex]);
   };
 
@@ -113,11 +110,11 @@ export default function AdminClient() {
 
   const confirmDelete = async () => {
     if (deleteId) {
-        setIsPending(true);
-        await deleteQuestionAction(deleteId);
-        setDeleteId(null);
-        setIsPending(false);
-        fetchQuestions(pageHistory[currentIndex]);
+      setIsPending(true);
+      await deleteQuestionAction(deleteId);
+      setDeleteId(null);
+      setIsPending(false);
+      fetchQuestions(pageHistory[currentIndex]);
     }
   };
 
@@ -174,7 +171,7 @@ export default function AdminClient() {
           <h2 className="text-xl font-semibold text-white">Questions Bank</h2>
           {isLoading && <div className="text-sm text-blue-400 animate-pulse">Loading...</div>}
         </div>
-        
+
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-left border-collapse text-slate-300">
             <thead>
@@ -212,7 +209,7 @@ export default function AdminClient() {
 
         {/* Server-Side Pagination Controls */}
         <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-700">
-          <button 
+          <button
             onClick={handlePrev}
             disabled={currentIndex === 0 || isLoading}
             className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors"
@@ -222,7 +219,7 @@ export default function AdminClient() {
           <span className="text-sm text-slate-400">
             Page {currentIndex + 1}
           </span>
-          <button 
+          <button
             onClick={handleNext}
             disabled={!nextKey || isLoading}
             className="px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-30 transition-colors"
@@ -239,14 +236,14 @@ export default function AdminClient() {
             <h3 className="text-lg font-semibold text-white mb-2">Confirm Deletion</h3>
             <p className="text-slate-400 mb-6">Are you sure you want to delete this question? This action cannot be undone.</p>
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setDeleteId(null)}
                 disabled={isPending}
                 className="px-4 py-2 rounded text-slate-300 hover:bg-slate-700 transition-colors disabled:opacity-50 font-medium"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={confirmDelete}
                 disabled={isPending}
                 className="px-4 py-2 rounded bg-red-600 hover:bg-red-500 text-white transition-colors disabled:opacity-50 font-medium shadow-lg shadow-red-900/20"

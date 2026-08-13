@@ -9,13 +9,13 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
-/**
- * Serverless function to retrieve all questions from the database.
- */
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
 @Component("getQuestions")
 public class GetQuestionsFunction implements Function<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
@@ -28,9 +28,53 @@ public class GetQuestionsFunction implements Function<APIGatewayProxyRequestEven
     @Override
     public APIGatewayProxyResponseEvent apply(final APIGatewayProxyRequestEvent request) {
         try {
-            final List<Question> questions = questionTable.scan().items()
-                    .stream().collect(Collectors.toList());
-            return CorsHelper.ok(questions);
+            Map<String, String> queryParams = request.getQueryStringParameters();
+            
+            int limit = 10;
+            String lastEvaluatedKeyId = null;
+
+            if (queryParams != null) {
+                if (queryParams.containsKey("limit")) {
+                    try {
+                        limit = Integer.parseInt(queryParams.get("limit"));
+                    } catch (NumberFormatException ignored) {}
+                }
+                if (queryParams.containsKey("lastEvaluatedKey") && !queryParams.get("lastEvaluatedKey").isEmpty()) {
+                    lastEvaluatedKeyId = queryParams.get("lastEvaluatedKey");
+                }
+            }
+
+            Map<String, AttributeValue> exclusiveStartKey = null;
+            if (lastEvaluatedKeyId != null && !lastEvaluatedKeyId.equals("null")) {
+                exclusiveStartKey = new HashMap<>();
+                exclusiveStartKey.put("id", AttributeValue.builder().s(lastEvaluatedKeyId).build());
+            }
+
+            final Map<String, AttributeValue> finalExclusiveStartKey = exclusiveStartKey;
+            final int finalLimit = limit;
+            
+            Page<Question> firstPage = questionTable.scan(r -> {
+                r.limit(finalLimit);
+                if (finalExclusiveStartKey != null) {
+                    r.exclusiveStartKey(finalExclusiveStartKey);
+                }
+            }).stream().findFirst().orElse(null);
+
+            Map<String, Object> response = new HashMap<>();
+            
+            if (firstPage != null) {
+                response.put("items", firstPage.items());
+                if (firstPage.lastEvaluatedKey() != null && firstPage.lastEvaluatedKey().containsKey("id")) {
+                    response.put("lastEvaluatedKey", firstPage.lastEvaluatedKey().get("id").s());
+                } else {
+                    response.put("lastEvaluatedKey", null);
+                }
+            } else {
+                response.put("items", new java.util.ArrayList<>());
+                response.put("lastEvaluatedKey", null);
+            }
+
+            return CorsHelper.ok(response);
         } catch (Exception e) {
             return CorsHelper.error(500, e.getMessage());
         }
