@@ -163,6 +163,22 @@ Resources:
             Path: /questions
             Method: post
 
+  UpdateQuestionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: updateQuestion
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref QuestionsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /questions/{id}
+            Method: put
+
   DeleteQuestionFunction:
     Type: AWS::Serverless::Function
     Properties:

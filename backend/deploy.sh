@@ -38,6 +38,7 @@ FUNCTIONS=(
   "GenerateQuizFunction"
   "GetQuestionByIdFunction"
   "CreateQuestionFunction"
+  "UpdateQuestionFunction"
   "DeleteQuestionFunction"
 )
 
