@@ -13,17 +13,12 @@ const Spinner = ({ className = "h-5 w-5" }: { className?: string }) => (
 );
 
 export default function RegisterPage() {
-  const [loading, setLoading] = useState(false);
-
   async function handleSubmit(formData: FormData) {
-    setLoading(true);
     const res = await registerAction(formData);
     if (res?.error) {
-        toast.error(res.error);
-        setLoading(false);
+      toast.error(res.error);
     } else {
-        toast.success('Admin created successfully! Redirecting...');
-        // setLoading(false) isn't called to keep spinner spinning during redirect
+      toast.success('Admin created successfully! Redirecting...');
     }
   }
 
@@ -46,14 +41,7 @@ export default function RegisterPage() {
               className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-2 w-full bg-blue-600 text-white font-semibold py-2.5 rounded-md hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading && <Spinner className="h-4 w-4 text-white" />}
-            {loading ? 'Creating...' : 'Register'}
-          </button>
+          <SubmitButton />
         </form>
         <div className="mt-6 text-center">
           <Link href="/admin" className="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium">
@@ -62,5 +50,21 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+import { useFormStatus } from 'react-dom';
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="mt-2 w-full bg-blue-600 text-white font-semibold py-2.5 rounded-md hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+    >
+      {pending && <Spinner className="h-4 w-4 text-white" />}
+      {pending ? 'Creating...' : 'Register'}
+    </button>
   );
 }
