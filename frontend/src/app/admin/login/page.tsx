@@ -12,15 +12,12 @@ const Spinner = ({ className = "h-5 w-5" }: { className?: string }) => (
 );
 
 export default function LoginPage() {
-    const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
     async function handleSubmit(formData: FormData) {
         setLoading(true);
-        setError(null);
         const res = await loginAction(formData);
         if (res?.error) {
-            setError(res.error);
             toast.error(res.error);
             setLoading(false);
         } else {
@@ -33,12 +30,6 @@ export default function LoginPage() {
         <div className="min-h-[100dvh] flex items-center justify-center bg-slate-900 text-slate-200">
             <div className="bg-slate-800 border border-slate-700 p-8 rounded-lg shadow-xl w-full max-w-sm">
                 <h1 className="text-2xl font-bold mb-6 text-center text-white">Admin Login</h1>
-                
-                {error && (
-                    <div className="bg-red-900/50 border border-red-500/50 text-red-200 px-4 py-3 rounded mb-4 text-sm">
-                        {error}
-                    </div>
-                )}
 
                 <form action={handleSubmit} className="flex flex-col gap-4">
                     <div>
