@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
 import { QuizQuestion } from '../../types/game';
 import { CARD_COLORS, LETTERS } from './engine/constants';
@@ -16,7 +17,7 @@ export default function QuestionCard({ question }: Props) {
   return (
     <>
       <div id="questionCard" style={{ display: 'block' }}>
-        <div id="definitionText">"{question.definition}"</div>
+        <div id="definitionText">&quot;{question.definition}&quot;</div>
         <div id="optionsRow">
           {question.options.map((opt, idx) => (
             <div key={idx} className="optItem" style={{ color: '#ccc' }}>

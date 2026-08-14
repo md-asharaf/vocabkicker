@@ -1,62 +1,31 @@
 #!/bin/bash
 set -e
 
-# Go to the backend directory
-cd "$(dirname "$0")"
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
 
-echo "Building Java Backend with Maven Shade..."
-./mvnw clean package -DskipTests
+echo "Building Java application..."
+./mvnw clean package
 
-JAR="target/serverless-0.0.1-SNAPSHOT-aws.jar"
-BUCKET_NAME="vocabkicker-artifacts-1786651469"
-JWT_SECRET="8Yrf0moM2pa5ZuhHyDoxnLzKbUuBNcfKOAhokkC3EQ1pB2bChHcxAFC6SRkL62"
-REGION="ap-south-1"
-STACK_NAME="vocabkicker-prod"
+DEPLOY_BUCKET="vocabkicker-cf-deployments-774411"
 
-# Compute S3 key from JAR hash so CloudFormation always picks up a fresh upload
-S3_KEY=$(md5sum "$JAR" | cut -d' ' -f1)
-echo "Uploading JAR ($(du -sh "$JAR" | cut -f1)) to s3://$BUCKET_NAME/$S3_KEY ..."
-aws s3 cp "$JAR" "s3://$BUCKET_NAME/$S3_KEY" --region "$REGION"
+aws s3 ls "s3://$DEPLOY_BUCKET" 2>/dev/null || aws s3 mb "s3://$DEPLOY_BUCKET"
 
-# Replace CodeUri in template so cloudformation package resolves the right file
-sed "s|CodeUri: target/serverless-0.0.1-SNAPSHOT-aws.jar|CodeUri: s3://$BUCKET_NAME/$S3_KEY|g" template.yaml > /tmp/template_patched.yaml
+echo "Packaging template and uploading code to S3..."
+aws cloudformation package \
+  --template-file template.yaml \
+  --s3-bucket "$DEPLOY_BUCKET" \
+  --output-template-file packaged.yaml
 
-echo "Deploying infrastructure via CloudFormation..."
+echo "Deploying CloudFormation stack..."
 aws cloudformation deploy \
-  --template-file /tmp/template_patched.yaml \
-  --stack-name "$STACK_NAME" \
+  --template-file packaged.yaml \
+  --stack-name vocabkicker-serverless \
   --capabilities CAPABILITY_IAM \
-  --parameter-overrides JwtSecret=$JWT_SECRET
+  --parameter-overrides \
+    JwtSecret="$JWT_SECRET" \
+    CorsAllowOrigin="$CORS_ALLOW_ORIGIN" \
+    ImportBucketName="$IMPORT_BUCKET_NAME"
 
-# Force-update all Lambda function code to the correct JAR
-echo "Updating Lambda function code..."
-FUNCTIONS=(
-  "AdminLoginFunction"
-  "CreateAdminFunction"
-  "AdminRefreshFunction"
-  "GetQuestionsFunction"
-  "GenerateQuizFunction"
-  "GetQuestionByIdFunction"
-  "CreateQuestionFunction"
-  "UpdateQuestionFunction"
-  "DeleteQuestionFunction"
-)
-
-for LOGICAL_NAME in "${FUNCTIONS[@]}"; do
-  PHYSICAL=$(aws cloudformation describe-stack-resources \
-    --stack-name "$STACK_NAME" \
-    --logical-resource-id "$LOGICAL_NAME" \
-    --region "$REGION" \
-    --query 'StackResources[0].PhysicalResourceId' \
-    --output text)
-  echo "  Updating $LOGICAL_NAME ($PHYSICAL)..."
-  aws lambda update-function-code \
-    --function-name "$PHYSICAL" \
-    --s3-bucket "$BUCKET_NAME" \
-    --s3-key "$S3_KEY" \
-    --region "$REGION" \
-    --query 'LastUpdateStatus' \
-    --output text
-done
-
-echo "✅ Deployment Successful!"
+echo "Deployment complete!"

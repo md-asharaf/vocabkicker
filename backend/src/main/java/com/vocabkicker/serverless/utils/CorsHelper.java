@@ -6,15 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Utility class to build API Gateway responses with CORS headers.
- * With Lambda Proxy Integration, CORS headers MUST be set by the Lambda itself —
- * the SAM Globals.Api.Cors block only handles the OPTIONS preflight, not actual responses.
- */
 public class CorsHelper {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String ALLOWED_ORIGIN = "https://vocabkicker.vercel.app";
+    private static final String ALLOWED_ORIGIN;
+    static {
+        String origin = System.getenv("CORS_ALLOW_ORIGIN");
+        ALLOWED_ORIGIN = origin != null && !origin.isEmpty() ? origin : "https://vocabkicker.vercel.app";
+    }
 
     public static Map<String, String> corsHeaders() {
         Map<String, String> headers = new HashMap<>();

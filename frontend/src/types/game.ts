@@ -6,7 +6,7 @@ export interface QuizQuestion {
 }
 
 export interface GameStatus {
-  readonly phase: string; // 'idle' | 'aiming' | 'kicking' | 'flying' | 'result'
+  readonly phase: string;
   readonly score: number;
   readonly streak: number;
   readonly qIdx: number;

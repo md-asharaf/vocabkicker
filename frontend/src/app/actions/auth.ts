@@ -2,13 +2,11 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { fetchWithAuth } from '../../lib/api';
+import { apiUrl, fetchWithAuth } from '../../lib/api';
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email');
   const password = formData.get('password');
-
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
   try {
     const res = await fetch(`${apiUrl}/admin/login`, {
@@ -40,8 +38,8 @@ export async function loginAction(formData: FormData) {
     } else {
       return { error: 'Invalid response from server' };
     }
-  } catch (err: any) {
-    if (err.message === 'NEXT_REDIRECT') {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === 'NEXT_REDIRECT') {
       throw err;
     }
     return { error: 'Failed to connect to backend' };
@@ -57,8 +55,6 @@ export async function logoutAction() {
 export async function registerAction(formData: FormData) {
   const email = formData.get('email');
   const password = formData.get('password');
-
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
   try {
     const res = await fetchWithAuth(`${apiUrl}/admin/register`, {
@@ -77,10 +73,10 @@ export async function registerAction(formData: FormData) {
       }
       return { error: `Failed to create admin. ${errorMsg}` };
     }
-    
+
     redirect('/admin');
-  } catch (err: any) {
-    if (err.message === 'NEXT_REDIRECT') {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === 'NEXT_REDIRECT') {
       throw err;
     }
     return { error: 'Failed to connect to backend' };

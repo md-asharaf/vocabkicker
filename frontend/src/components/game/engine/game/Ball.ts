@@ -26,9 +26,11 @@ function makeBallTexture(): THREE.CanvasTexture {
     ctx.beginPath();
     for (let i = 0; i < 5; i++) {
       const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
-      i === 0
-        ? ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a))
-        : ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+      if (i === 0) {
+        ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+      } else {
+        ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+      }
     }
     ctx.closePath();
     ctx.fill();

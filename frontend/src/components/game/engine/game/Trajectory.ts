@@ -71,7 +71,4 @@ export class Trajectory {
   hide() {
     this.group.visible = false;
   }
-
-  updateCursorPulse(dt: number) {
-  }
 }

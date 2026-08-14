@@ -2,17 +2,10 @@
 
 import { fetchWithAuth } from '../../lib/api';
 
-export async function createQuestionAction(formData: FormData) {
-  const word = formData.get('word');
-  const mnemonic = formData.get('mnemonic');
-  const definition = formData.get('definition');
-
+export async function getUploadUrlAction(ext: string) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
-  const res = await fetchWithAuth(`${apiUrl}/questions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ word, mnemonic, definition }),
+  const res = await fetchWithAuth(`${apiUrl}/questions/upload-url?ext=${ext}`, {
+    method: 'GET',
   });
 
   if (!res.ok) {
@@ -23,8 +16,10 @@ export async function createQuestionAction(formData: FormData) {
     } catch {
       // Ignore parsing error
     }
-    return { error: `Failed to create question. ${errorMsg}` };
+    return { error: `Failed to get upload URL. ${errorMsg}` };
   }
+  
+  return await res.json();
 }
 
 export async function updateQuestionAction(id: string, formData: FormData) {
@@ -46,7 +41,6 @@ export async function updateQuestionAction(id: string, formData: FormData) {
       const errorData = await res.json();
       if (errorData.error) errorMsg = errorData.error;
     } catch {
-      // Ignore parsing error
     }
     return { error: `Failed to update question. ${errorMsg}` };
   }
@@ -65,7 +59,6 @@ export async function deleteQuestionAction(id: string) {
       const errorData = await res.json();
       if (errorData.error) errorMsg = errorData.error;
     } catch {
-      // Ignore parsing error
     }
     return { error: `Failed to delete question. ${errorMsg}` };
   }

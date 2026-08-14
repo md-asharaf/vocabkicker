@@ -1,8 +1,8 @@
-export default function LoadingScreen() {
+export default function LoadingScreen({ message = "Loading VocabKicker 3D…" }: { message?: string }) {
   return (
     <div id="loadingScreen" style={{ display: 'flex' }}>
       <div className="spinner"></div>
-      <p>Loading VocabKicker 3D…</p>
+      <p>{message}</p>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-package com.vocabkicker.serverless.model;
+package com.vocabkicker.serverless.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +11,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class QuizQuestion {
-    private String definition;
-    private String answer;
-    private String mnemonic;
-    private List<String> options;
+  private String definition;
+  private String word;
+  private String mnemonic;
+  private List<String> options;
 }

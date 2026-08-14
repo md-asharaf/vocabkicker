@@ -255,3 +255,10 @@ html,body{width:100%;height:100%;height:100dvh;overflow:hidden;background:#0a0a0
   margin-bottom: 2rem;
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
 }
+
+@media (max-width: 768px) {
+  #controlsHUD {
+    top: 20%;
+  }
+}
+

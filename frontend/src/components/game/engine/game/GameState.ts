@@ -112,7 +112,7 @@ export class GameState {
       this._emitUpdate();
     };
 
-    inp.onDragMove = (aimX: number, aimY: number, curveFactor: number, power: number, sx: number, sy: number) => {
+    inp.onDragMove = (aimX: number, aimY: number, curveFactor: number) => {
       if (this._phase !== PHASE.AIMING) return;
       this._aimX = aimX;
       this._aimY = aimY;
@@ -277,7 +277,6 @@ export class GameState {
   public update(dt: number): void {
     this._kicker.update(dt);
     this._ball.update(dt);
-    this._traj.updateCursorPulse(dt);
     this._pfx.update(dt);
 
     this._gkManager.update(dt);

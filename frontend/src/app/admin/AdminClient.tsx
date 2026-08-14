@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { createQuestionAction, deleteQuestionAction, updateQuestionAction } from '../actions/questions';
+import { useState, useEffect } from 'react';
+import { getUploadUrlAction, deleteQuestionAction, updateQuestionAction } from '../actions/questions';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { Spinner } from '@/components/Spinner';
 
 type Question = {
   id: string;
@@ -12,13 +13,6 @@ type Question = {
   definition: string;
 };
 
-const Spinner = ({ className = "h-5 w-5" }: { className?: string }) => (
-  <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-  </svg>
-);
-
 export default function AdminClient() {
   // Data State
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -26,12 +20,17 @@ export default function AdminClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
 
-  // Form State
+  // Edit State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [word, setWord] = useState('');
   const [mnemonic, setMnemonic] = useState('');
   const [definition, setDefinition] = useState('');
+
+  // Import State
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [uploadingStatus, setUploadingStatus] = useState('');
 
   // UI State
   const [isPending, setIsPending] = useState(false);
@@ -68,8 +67,9 @@ export default function AdminClient() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchQuestions(pageHistory[currentIndex], activeSearch);
-  }, [currentIndex, activeSearch]);
+  }, [currentIndex, activeSearch, pageHistory]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -105,14 +105,6 @@ export default function AdminClient() {
     }
   };
 
-  const openCreate = () => {
-    setEditId(null);
-    setWord('');
-    setMnemonic('');
-    setDefinition('');
-    setIsFormModalOpen(true);
-  };
-
   const handleEdit = (q: Question) => {
     setEditId(q.id);
     setWord(q.word);
@@ -131,6 +123,8 @@ export default function AdminClient() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editId) return;
+
     setIsPending(true);
     const formData = new FormData();
     formData.append('word', word);
@@ -138,15 +132,9 @@ export default function AdminClient() {
     formData.append('definition', definition);
 
     try {
-      if (editId) {
-        const res = await updateQuestionAction(editId, formData);
-        if (res?.error) throw new Error(res.error);
-        toast.success('Question updated successfully!');
-      } else {
-        const res = await createQuestionAction(formData);
-        if (res?.error) throw new Error(res.error);
-        toast.success('Question created successfully!');
-      }
+      const res = await updateQuestionAction(editId, formData);
+      if (res?.error) throw new Error(res.error);
+      toast.success('Question updated successfully!');
 
       setIsFormModalOpen(false);
       setEditId(null);
@@ -156,8 +144,8 @@ export default function AdminClient() {
 
       // Refresh the current page
       fetchQuestions(pageHistory[currentIndex], activeSearch);
-    } catch (error: any) {
-      toast.error(error.message || 'An error occurred');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsPending(false);
     }
@@ -172,11 +160,59 @@ export default function AdminClient() {
         toast.success('Question deleted successfully!');
         setDeleteId(null);
         fetchQuestions(pageHistory[currentIndex], activeSearch);
-      } catch (error: any) {
-        toast.error(error.message || 'An error occurred deleting the question');
+      } catch (error: unknown) {
+        toast.error(error instanceof Error ? error.message : 'An error occurred deleting the question');
       } finally {
         setIsPending(false);
       }
+    }
+  };
+
+  const openImport = () => {
+    setImportFile(null);
+    setUploadingStatus('');
+    setIsImportModalOpen(true);
+  };
+
+  const handleImportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importFile) return;
+
+    setIsPending(true);
+    try {
+      const ext = importFile.name.toLowerCase().endsWith('.docx') ? 'docx' : 'csv';
+      setUploadingStatus('Requesting upload link...');
+
+      const urlRes = await getUploadUrlAction(ext);
+      if (urlRes?.error) throw new Error(urlRes.error);
+
+      setUploadingStatus('Uploading file to S3...');
+      const uploadRes = await fetch(urlRes.url, {
+        method: 'PUT',
+        body: importFile,
+        headers: {
+          'Content-Type': importFile.type || 'application/octet-stream',
+        },
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error('Failed to upload file to S3');
+      }
+
+      setUploadingStatus('Upload complete! Processing in background...');
+      toast.success('File uploaded successfully! Questions will appear shortly.');
+
+      setTimeout(() => {
+        setIsImportModalOpen(false);
+        setUploadingStatus('');
+        setIsPending(false);
+        fetchQuestions(pageHistory[currentIndex], activeSearch);
+      }, 2000);
+
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred during import');
+      setUploadingStatus('');
+      setIsPending(false);
     }
   };
 
@@ -204,8 +240,9 @@ export default function AdminClient() {
             <Link href="/admin/register" className="text-sm bg-slate-700/50 text-slate-300 border border-slate-700 px-4 py-2 rounded-md hover:bg-slate-700 hover:text-white transition-colors font-medium">
               New Admin
             </Link>
-            <button onClick={openCreate} className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors shadow-md shadow-blue-900/20 font-medium">
-              + Add Question
+            <button onClick={openImport} className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors shadow-md shadow-blue-900/20 font-medium flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              Batch Import
             </button>
           </div>
         </div>
@@ -242,8 +279,6 @@ export default function AdminClient() {
                 </tr>
               ))}
 
-
-
               {/* Empty State */}
               {!isLoading && questions.length === 0 && (
                 <tr>
@@ -251,7 +286,7 @@ export default function AdminClient() {
                     <div className="flex flex-col items-center gap-3">
                       <svg className="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                       <p className="font-medium">
-                        {activeSearch ? 'No questions match your search.' : 'No questions found. Add one!'}
+                        {activeSearch ? 'No questions match your search.' : 'No questions found. Add one via Batch Import!'}
                       </p>
                     </div>
                   </td>
@@ -285,13 +320,13 @@ export default function AdminClient() {
         </div>
       </div>
 
-      {/* Form Modal (Shadcn/MUI Style) */}
+      {/* Edit Form Modal */}
       {isFormModalOpen && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-white tracking-tight">
-                {editId ? 'Edit Question' : 'Add New Question'}
+                Edit Question
               </h3>
               <button onClick={cancelEdit} className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-md hover:bg-slate-800">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -330,7 +365,53 @@ export default function AdminClient() {
                 </button>
                 <button type="submit" disabled={isPending} className="px-5 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
                   {isPending && <Spinner className="h-4 w-4 text-white" />}
-                  {isPending ? 'Saving...' : (editId ? 'Save Changes' : 'Create Question')}
+                  {isPending ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Import Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-white tracking-tight">
+                Batch Import Questions
+              </h3>
+              <button onClick={() => setIsImportModalOpen(false)} disabled={isPending} className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-md hover:bg-slate-800 disabled:opacity-50">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleImportSubmit} className="flex flex-col gap-5">
+              <div>
+                <label className="block text-sm font-medium mb-1.5 text-slate-300">Select File (.csv, .docx)</label>
+                <input
+                  type="file"
+                  accept=".csv, .docx, application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={e => setImportFile(e.target.files?.[0] || null)}
+                  required
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700"
+                />
+              </div>
+
+              {uploadingStatus && (
+                <div className="text-sm font-medium text-blue-400 bg-blue-400/10 p-3 rounded-lg flex items-center gap-3">
+                  <Spinner className="h-4 w-4" />
+                  {uploadingStatus}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 mt-4 pt-5 border-t border-slate-800">
+                <button type="button" onClick={() => setIsImportModalOpen(false)} disabled={isPending} className="px-4 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors disabled:opacity-50 border border-transparent hover:border-slate-700">
+                  Cancel
+                </button>
+                <button type="submit" disabled={isPending || !importFile} className="px-5 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
+                  {isPending && <Spinner className="h-4 w-4 text-white" />}
+                  {isPending ? 'Uploading...' : 'Upload & Import'}
                 </button>
               </div>
             </form>

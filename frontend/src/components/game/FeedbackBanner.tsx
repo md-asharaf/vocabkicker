@@ -1,11 +1,12 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react';
 
 interface Props {
   feedback: { correct: boolean; pts: number; msg: string | null };
 }
 
-const GOAL_EMOJIS = ['⚽🎉', '🥅✨', '💯🔥', '🎯⚡', '🌟💥'];
-const MISS_EMOJIS = ['😬🧤', '🙈❌', '💨🤦', '🛑😮', '😤🧤'];
+const GOAL_EMOJIS = ['⚽', '💯', '🎯', '🎉', '🔥'];
+const MISS_EMOJIS = ['😬', '🙈', '🤦', '🧤', '💨'];
 const GOAL_TITLES = ['Gooal!', 'Perfect Shot!', 'BullsEye!', 'Amazing!', 'Great Kick!'];
 const MISS_TITLES = ['Blocked!', 'Caught!', 'Wrong Answer!', 'Saved!', 'Missed!'];
 
@@ -18,9 +19,9 @@ export default function FeedbackBanner({ feedback }: Props) {
     const idx = Math.floor(Math.random() * 5);
     setEmoji(feedback.correct ? GOAL_EMOJIS[idx] : MISS_EMOJIS[idx]);
     setTitle(feedback.msg || (feedback.correct ? GOAL_TITLES[idx] : MISS_TITLES[idx]));
-    
+
     setShow(true);
-    const timer = setTimeout(() => setShow(false), 2400); // Hide before next question
+    const timer = setTimeout(() => setShow(false), 2400);
     return () => clearTimeout(timer);
   }, [feedback]);
 

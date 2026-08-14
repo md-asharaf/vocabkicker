@@ -21,7 +21,7 @@ export function initScene(canvas: HTMLCanvasElement) {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
-  try { renderer.outputColorSpace = THREE.SRGBColorSpace; } catch (_) { }
+  try { renderer.outputColorSpace = THREE.SRGBColorSpace; } catch { }
 
   return { scene, camera, renderer };
 }

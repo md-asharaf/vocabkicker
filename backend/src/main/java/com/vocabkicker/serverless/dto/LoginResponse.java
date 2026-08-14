@@ -1,4 +1,4 @@
-package com.vocabkicker.serverless.model;
+package com.vocabkicker.serverless.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponse {
-    private String token;
-    private String message;
+  private String token;
+  private String message;
 }

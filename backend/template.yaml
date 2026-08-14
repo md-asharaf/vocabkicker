@@ -7,13 +7,21 @@ Parameters:
     Type: String
     Description: "Secret key for JWT generation (must be at least 32 characters)"
     NoEcho: true
+  CorsAllowOrigin:
+    Type: String
+    Description: "Allowed origin for CORS (e.g. http://localhost:8000)"
+    Default: "http://localhost:8000"
+  ImportBucketName:
+    Type: String
+    Description: "Specific name for the S3 bucket to import files (must be globally unique)"
+    Default: "vocabkicker-import-bucket"
 
 Globals:
   Api:
     Cors:
       AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
       AllowHeaders: "'Content-Type,Authorization,Cookie'"
-      AllowOrigin: "'https://vocabkicker.vercel.app'"
+      AllowOrigin: !Sub "'${CorsAllowOrigin}'"
       AllowCredentials: true
   Function:
     Timeout: 30
@@ -25,6 +33,8 @@ Globals:
       Variables:
         JWT_SECRET: !Ref JwtSecret
         MAIN_CLASS: com.vocabkicker.serverless.VocabKickerServerlessApplication
+        CORS_ALLOW_ORIGIN: !Ref CorsAllowOrigin
+        IMPORT_BUCKET_NAME: !Ref ImportBucketName
 
 Resources:
   QuestionsTable:
@@ -50,6 +60,22 @@ Resources:
         - AttributeName: id
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+
+  QuestionsImportBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref ImportBucketName
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - PUT
+              - GET
+            AllowedOrigins:
+              - !Ref CorsAllowOrigin
+              - "http://localhost:3000"
+            MaxAge: 3000
 
   AdminLoginFunction:
     Type: AWS::Serverless::Function
@@ -147,21 +173,41 @@ Resources:
             Path: /questions/{id}
             Method: get
 
-  CreateQuestionFunction:
+  GenerateUploadUrlFunction:
     Type: AWS::Serverless::Function
     Properties:
       Environment:
         Variables:
-          SPRING_CLOUD_FUNCTION_DEFINITION: createQuestion
+          SPRING_CLOUD_FUNCTION_DEFINITION: generateUploadUrl
       Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref QuestionsTable
+        - S3CrudPolicy:
+            BucketName: !Ref ImportBucketName
       Events:
         Api:
           Type: Api
           Properties:
-            Path: /questions
-            Method: post
+            Path: /questions/upload-url
+            Method: get
+
+  BatchCreateQuestionsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 120
+      MemorySize: 1024
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: batchCreateQuestions
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref ImportBucketName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref QuestionsTable
+      Events:
+        FileUpload:
+          Type: S3
+          Properties:
+            Bucket: !Ref QuestionsImportBucket
+            Events: s3:ObjectCreated:*
 
   UpdateQuestionFunction:
     Type: AWS::Serverless::Function
