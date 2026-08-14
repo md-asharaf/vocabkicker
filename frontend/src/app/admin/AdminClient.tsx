@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createQuestionAction, deleteQuestionAction, updateQuestionAction } from '../actions/questions';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 type Question = {
   id: string;
@@ -186,7 +187,6 @@ export default function AdminClient() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h2 className="text-2xl font-bold text-white flex items-center gap-3 tracking-tight">
             Questions Bank
-            {isLoading && <Spinner className="h-5 w-5 text-blue-400" />}
           </h2>
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
             <form onSubmit={handleSearchSubmit} className="flex-1 md:w-64 flex relative">
@@ -201,16 +201,21 @@ export default function AdminClient() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </button>
             </form>
-            <a href="/admin/register" className="text-sm bg-slate-700/50 text-slate-300 border border-slate-700 px-4 py-2 rounded-md hover:bg-slate-700 hover:text-white transition-colors font-medium">
+            <Link href="/admin/register" className="text-sm bg-slate-700/50 text-slate-300 border border-slate-700 px-4 py-2 rounded-md hover:bg-slate-700 hover:text-white transition-colors font-medium">
               New Admin
-            </a>
+            </Link>
             <button onClick={openCreate} className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors shadow-md shadow-blue-900/20 font-medium">
               + Add Question
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto flex-1">
+        <div className="overflow-x-auto flex-1 relative min-h-[200px]">
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center z-10 bg-slate-800/50 rounded pointer-events-none">
+              <Spinner className="h-8 w-8 text-blue-500" />
+            </div>
+          )}
           <table className="w-full text-left border-collapse text-slate-300">
             <thead>
               <tr className="border-b border-slate-700">
@@ -237,17 +242,7 @@ export default function AdminClient() {
                 </tr>
               ))}
 
-              {/* Skeleton Loaders for empty state during loading */}
-              {isLoading && questions.length === 0 && (
-                [...Array(5)].map((_, i) => (
-                  <tr key={`skel-${i}`} className="border-b border-slate-700/50">
-                    <td className="py-4 px-2"><div className="h-4 bg-slate-700/50 rounded w-24 animate-pulse"></div></td>
-                    <td className="py-4 px-2"><div className="h-4 bg-slate-700/50 rounded w-32 animate-pulse"></div></td>
-                    <td className="py-4 px-2"><div className="h-4 bg-slate-700/50 rounded w-full max-w-md animate-pulse"></div></td>
-                    <td className="py-4 px-2"><div className="h-4 bg-slate-700/50 rounded w-16 ml-auto animate-pulse"></div></td>
-                  </tr>
-                ))
-              )}
+
 
               {/* Empty State */}
               {!isLoading && questions.length === 0 && (
