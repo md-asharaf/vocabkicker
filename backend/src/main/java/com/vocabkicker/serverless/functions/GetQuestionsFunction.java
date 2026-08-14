@@ -59,34 +59,59 @@ public class GetQuestionsFunction implements Function<APIGatewayProxyRequestEven
             final int finalLimit = limit;
             final String finalSearch = search;
             
-            Page<Question> firstPage = questionTable.scan(r -> {
-                r.limit(finalLimit);
-                if (finalExclusiveStartKey != null) {
-                    r.exclusiveStartKey(finalExclusiveStartKey);
-                }
-                if (finalSearch != null) {
-                    software.amazon.awssdk.enhanced.dynamodb.Expression filterExpr = 
-                        software.amazon.awssdk.enhanced.dynamodb.Expression.builder()
-                            .expression("contains(word, :s) OR contains(definition, :s)")
-                            .putExpressionValue(":s", AttributeValue.builder().s(finalSearch).build())
-                            .build();
-                    r.filterExpression(filterExpr);
-                }
-            }).stream().findFirst().orElse(null);
+            java.util.List<Question> resultItems = new java.util.ArrayList<>();
+            String nextKey = null;
 
-            Map<String, Object> response = new HashMap<>();
-            
-            if (firstPage != null) {
-                response.put("items", firstPage.items());
-                if (firstPage.lastEvaluatedKey() != null && firstPage.lastEvaluatedKey().containsKey("id")) {
-                    response.put("lastEvaluatedKey", firstPage.lastEvaluatedKey().get("id").s());
-                } else {
-                    response.put("lastEvaluatedKey", null);
+            if (finalSearch != null) {
+                java.util.regex.Pattern pattern;
+                try {
+                    pattern = java.util.regex.Pattern.compile(finalSearch, java.util.regex.Pattern.CASE_INSENSITIVE);
+                } catch (java.util.regex.PatternSyntaxException e) {
+                    pattern = java.util.regex.Pattern.compile(java.util.regex.Pattern.quote(finalSearch), java.util.regex.Pattern.CASE_INSENSITIVE);
+                }
+
+                java.util.Iterator<Page<Question>> iterator = questionTable.scan(r -> {
+                    if (finalExclusiveStartKey != null) {
+                        r.exclusiveStartKey(finalExclusiveStartKey);
+                    }
+                }).iterator();
+
+                outerLoop:
+                while (iterator.hasNext()) {
+                    Page<Question> page = iterator.next();
+                    for (Question q : page.items()) {
+                        boolean match = false;
+                        if (q.getWord() != null && pattern.matcher(q.getWord()).find()) match = true;
+                        if (!match && q.getDefinition() != null && pattern.matcher(q.getDefinition()).find()) match = true;
+                        
+                        if (match) {
+                            resultItems.add(q);
+                            if (resultItems.size() == finalLimit) {
+                                nextKey = q.getId();
+                                break outerLoop;
+                            }
+                        }
+                    }
                 }
             } else {
-                response.put("items", new java.util.ArrayList<>());
-                response.put("lastEvaluatedKey", null);
+                Page<Question> firstPage = questionTable.scan(r -> {
+                    r.limit(finalLimit);
+                    if (finalExclusiveStartKey != null) {
+                        r.exclusiveStartKey(finalExclusiveStartKey);
+                    }
+                }).stream().findFirst().orElse(null);
+                
+                if (firstPage != null) {
+                    resultItems.addAll(firstPage.items());
+                    if (firstPage.lastEvaluatedKey() != null && firstPage.lastEvaluatedKey().containsKey("id")) {
+                        nextKey = firstPage.lastEvaluatedKey().get("id").s();
+                    }
+                }
             }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("items", resultItems);
+            response.put("lastEvaluatedKey", nextKey);
 
             return CorsHelper.ok(response);
         } catch (Exception e) {
