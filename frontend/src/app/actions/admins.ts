@@ -1,6 +1,6 @@
 'use server';
 
-import { apiUrl, fetchWithAuth } from '../../lib/api';
+import { apiUrl, fetchWithAuth } from '@/lib/api';
 
 export type AdminUser = {
   id: string;

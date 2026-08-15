@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 public class QuizQuestion {
   private String definition;
-  private String word;
+  private String answer;
   private String mnemonic;
   private List<String> options;
 }

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
-import { QuizQuestion } from '../../types/game';
+import { QuizQuestion } from '@/types/game';
 import { CARD_COLORS, LETTERS } from './engine/constants';
 
 interface Props {

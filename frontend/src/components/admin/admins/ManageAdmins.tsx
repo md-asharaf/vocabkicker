@@ -5,7 +5,7 @@ import { useAdmins } from '@/hooks/useAdmins';
 import AdminsTable from './AdminsTable';
 import EditAdminModal from './EditAdminModal';
 import ConfirmModal from '@/components/common/ConfirmModal';
-import RefreshButton from '../../common/RefreshButton';
+import RefreshButton from '@/components/common/RefreshButton';
 
 export default function ManageAdmins() {
   const {

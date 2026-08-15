@@ -1,6 +1,6 @@
 'use server';
 
-import { apiUrl, fetchWithAuth } from '../../lib/api';
+import { apiUrl, fetchWithAuth } from '@/lib/api';
 
 export type QuestionsPage = {
   items: { id: string; word: string; mnemonic: string; definition: string }[];

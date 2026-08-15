@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { apiUrl, fetchWithAuth } from '../../lib/api';
+import { apiUrl, fetchWithAuth } from '@/lib/api';
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email');

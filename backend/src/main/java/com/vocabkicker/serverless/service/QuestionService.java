@@ -112,15 +112,16 @@ public class QuestionService {
       Collections.shuffle(distractors);
 
       List<String> options = new ArrayList<>();
-      options.add(q.getDefinition());
+      options.add(q.getWord());
 
       for (int i = 0; i < 3 && i < distractors.size(); i++) {
-        options.add(distractors.get(i).getDefinition());
+        options.add(distractors.get(i).getWord());
       }
 
       Collections.shuffle(options);
       QuizQuestion qq = new QuizQuestion();
-      qq.setWord(q.getWord());
+      qq.setDefinition(q.getDefinition());
+      qq.setAnswer(q.getWord());
       qq.setMnemonic(q.getMnemonic());
       qq.setOptions(options);
 

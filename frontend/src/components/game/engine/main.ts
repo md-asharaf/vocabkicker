@@ -12,7 +12,7 @@ import { ParticleSystem } from './game/Particles';
 import { Input } from './game/Input';
 import { Quiz } from './game/Quiz';
 import { GameState } from './game/GameState';
-import { GameStatus } from '../../../types/game';
+import { GameStatus } from '@/types/game';
 import { assetManager } from './AssetManager';
 
 export interface GameController {

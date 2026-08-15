@@ -1,5 +1,5 @@
-import { QuizApi } from '../../../../api/quizApi';
-import { QuizQuestion } from '../../../../types/game';
+import { QuizApi } from '@/api/quizApi';
+import { QuizQuestion } from '@/types/game';
 
 export class Quiz {
   private _questions: readonly QuizQuestion[];

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { bootstrap, GameController } from './engine/main';
-import { GameStatus } from '../../types/game';
+import { GameStatus } from '@/types/game';
 import { QUESTIONS_PER_GAME } from './engine/constants';
 import './engine/style.css';
 

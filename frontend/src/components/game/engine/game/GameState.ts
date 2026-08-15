@@ -9,7 +9,7 @@ import { Trajectory } from './Trajectory';
 import { ParticleSystem } from './Particles';
 import { Kicker } from '../characters/Kicker';
 import { Quiz } from './Quiz';
-import { GameStatus, QuizQuestion } from '../../../../types/game';
+import { GameStatus, QuizQuestion } from '@/types/game';
 import { Input } from './Input';
 
 import { CameraManager } from './CameraManager';
