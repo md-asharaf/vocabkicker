@@ -23,16 +23,15 @@ public class GenerateUploadUrlFunction extends ApiGatewayHandler {
 
   public GenerateUploadUrlFunction(JwtService jwtService) {
     this.jwtService = jwtService;
-    final String bucket = System.getenv("IMPORT_BUCKET_NAME");
-    if (bucket == null || bucket.isEmpty()) {
-      throw new IllegalStateException("IMPORT_BUCKET_NAME environment variable is missing");
-    }
-    this.bucketName = bucket;
+    this.bucketName = System.getenv("IMPORT_BUCKET_NAME");
     this.presigner = S3Presigner.create();
   }
 
   @Override
   protected APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent request) throws Exception {
+    if (this.bucketName == null || this.bucketName.isEmpty()) {
+      throw new IllegalStateException("IMPORT_BUCKET_NAME environment variable is missing");
+    }
     jwtService.validateAdminToken(request.getHeaders());
 
     Map<String, String> queryParams = request.getQueryStringParameters();

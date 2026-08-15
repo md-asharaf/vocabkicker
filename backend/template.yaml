@@ -25,7 +25,7 @@ Globals:
       AllowCredentials: true
   Function:
     Timeout: 30
-    MemorySize: 512
+    MemorySize: 1024
     Runtime: java17
     Handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
     CodeUri: target/serverless-0.0.1-SNAPSHOT-aws.jar
@@ -124,6 +124,54 @@ Resources:
           Properties:
             Path: /admin/refresh
             Method: post
+
+  ListAdminsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: listAdmins
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /admins
+            Method: get
+
+  UpdateAdminFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: updateAdmin
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /admins/{id}
+            Method: put
+
+  DeleteAdminFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: deleteAdmin
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /admins/{id}
+            Method: delete
 
   GetQuestionsFunction:
     Type: AWS::Serverless::Function

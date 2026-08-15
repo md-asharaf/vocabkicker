@@ -3,6 +3,8 @@ package com.vocabkicker.serverless.service;
 import com.vocabkicker.serverless.dto.AuthResult;
 import com.vocabkicker.serverless.dto.LoginRequest;
 import com.vocabkicker.serverless.dto.RefreshRequest;
+import com.vocabkicker.serverless.dto.UpdateAdminRequest;
+import com.vocabkicker.serverless.dto.UserDto;
 import com.vocabkicker.serverless.entity.User;
 import com.vocabkicker.serverless.exception.BadRequestException;
 import com.vocabkicker.serverless.exception.ConflictException;
@@ -20,6 +22,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
@@ -47,10 +51,57 @@ public class AuthService {
 
         return generateTokensAndSave(user);
     }
+    public long getAdminCount() {
+        return userRepository.count();
+    }
 
-    public AuthResult createAdmin(LoginRequest req) {
-        if (userRepository.count() > 0) {
-            throw new ConflictException("An admin user already exists.");
+    public List<UserDto> getAllAdmins() {
+        return userRepository.findAll().stream().map(user -> UserDto.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build()).collect(Collectors.toList());
+    }
+
+    public UserDto updateAdmin(String id, UpdateAdminRequest req) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Admin not found"));
+
+        if (req.getEmail() != null && !req.getEmail().isBlank()) {
+            String newEmail = req.getEmail().toLowerCase();
+            if (!newEmail.equals(user.getEmail())) {
+                if (userRepository.findByEmail(newEmail).isPresent()) {
+                    throw new ConflictException("An admin with this email already exists");
+                }
+                user.setEmail(newEmail);
+            }
+        }
+
+        if (req.getPassword() != null && !req.getPassword().isBlank()) {
+            user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        }
+
+        user.setUpdatedAt(System.currentTimeMillis());
+        userRepository.save(user);
+
+        return UserDto.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
+    }
+
+    public void deleteAdmin(String id) {
+        userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Admin not found"));
+        userRepository.deleteById(id);
+    }
+
+    public void createAdmin(LoginRequest req) {
+        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+            throw new ConflictException("An admin user with this email already exists.");
         }
 
         final long now = System.currentTimeMillis();
@@ -64,7 +115,6 @@ public class AuthService {
 
         userRepository.save(user);
 
-        return login(req);
     }
 
     public AuthResult refresh(RefreshRequest req) {

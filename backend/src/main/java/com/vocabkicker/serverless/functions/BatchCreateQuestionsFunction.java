@@ -32,7 +32,10 @@ public class BatchCreateQuestionsFunction implements Function<S3Event, String> {
 
   public BatchCreateQuestionsFunction(QuestionService questionService) {
     this.questionService = questionService;
-    this.s3Client = S3Client.create();
+    this.s3Client = software.amazon.awssdk.services.s3.S3Client.builder()
+        .region(software.amazon.awssdk.regions.Region.AP_SOUTH_1)
+        .httpClientBuilder(software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient.builder())
+        .build();
   }
 
   @Override

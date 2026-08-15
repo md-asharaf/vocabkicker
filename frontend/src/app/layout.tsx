@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VocabKicker Admin",
-  description: "Admin dashboard for VocabKicker vocabulary game",
+  title: "VocabKicker 3D",
+  description: "Learn vocabulary with the 3D interactive quiz game — VocabKicker.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

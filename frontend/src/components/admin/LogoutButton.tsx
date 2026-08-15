@@ -1,6 +1,6 @@
 'use client';
 
-import { Spinner } from '@/components/Spinner';
+import { Spinner } from '@/components/common/Spinner';
 import { useFormStatus } from 'react-dom';
 
 export default function LogoutButton() {

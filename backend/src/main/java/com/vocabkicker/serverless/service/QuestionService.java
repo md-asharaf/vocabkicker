@@ -94,7 +94,7 @@ public class QuestionService {
   }
 
   public List<QuizQuestion> generateQuiz(int numberOfQuestions) {
-    List<Question> allQuestions = questionRepository.findAll();
+    List<Question> allQuestions = new ArrayList<>(questionRepository.findAll());
 
     if (allQuestions.size() < numberOfQuestions) {
       throw new RuntimeException("Not enough questions in database to form a quiz.");
