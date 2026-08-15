@@ -24,7 +24,7 @@ public class JwtService {
     return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
   }
 
-  public void validateAdminToken(Map<String, String> headers) {
+  public Claims validateAdminToken(Map<String, String> headers) {
     String token = extractToken(headers);
     if (token == null) {
       throw new UnauthorizedException("Unauthorized: Missing admin_token");
@@ -44,6 +44,8 @@ public class JwtService {
       if (claims.getExpiration().before(new Date())) {
         throw new UnauthorizedException("Unauthorized: Token expired");
       }
+      
+      return claims;
     } catch (Exception e) {
       throw new UnauthorizedException("Unauthorized: " + e.getMessage());
     }

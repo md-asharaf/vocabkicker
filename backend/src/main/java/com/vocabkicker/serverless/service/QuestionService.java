@@ -120,8 +120,8 @@ public class QuestionService {
 
       Collections.shuffle(options);
       QuizQuestion qq = new QuizQuestion();
-      qq.setDefinition(q.getDefinition());
       qq.setAnswer(q.getWord());
+      qq.setDefinition(q.getDefinition());
       qq.setMnemonic(q.getMnemonic());
       qq.setOptions(options);
 

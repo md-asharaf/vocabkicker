@@ -16,12 +16,12 @@ export default async function ManageAdminsPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/admin"
-            className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-medium"
+            className="text-slate-400 hover:text-white transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-slate-800"
+            title="Back to Dashboard"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
             </svg>
-            Dashboard
           </Link>
           <h1 className="text-2xl md:text-3xl font-bold text-white">Manage Admins</h1>
         </div>

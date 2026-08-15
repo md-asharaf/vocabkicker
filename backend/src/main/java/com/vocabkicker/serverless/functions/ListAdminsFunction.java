@@ -23,8 +23,11 @@ public class ListAdminsFunction extends ApiGatewayHandler {
 
     @Override
     protected APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent request) throws Exception {
-        jwtService.validateAdminToken(request.getHeaders());
-        List<UserDto> admins = authService.getAllAdmins();
+        io.jsonwebtoken.Claims claims = jwtService.validateAdminToken(request.getHeaders());
+        String currentAdminId = claims.getSubject();
+        List<UserDto> admins = authService.getAllAdmins().stream()
+                .filter(admin -> !admin.getId().equals(currentAdminId))
+                .toList();
         return CorsHelper.ok(admins);
     }
 }
