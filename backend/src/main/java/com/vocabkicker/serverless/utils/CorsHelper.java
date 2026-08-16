@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CorsHelper {
@@ -66,6 +67,19 @@ public class CorsHelper {
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(200)
                     .withHeaders(headers)
+                    .withBody(MAPPER.writeValueAsString(body));
+        } catch (Exception e) {
+            return error(500, "Serialization error: " + e.getMessage());
+        }
+    }
+
+    public static APIGatewayProxyResponseEvent okWithMultiValueHeaders(Object body, Map<String, List<String>> multiHeaders) {
+        Map<String, String> headers = corsHeaders();
+        try {
+            return new APIGatewayProxyResponseEvent()
+                    .withStatusCode(200)
+                    .withHeaders(headers)
+                    .withMultiValueHeaders(multiHeaders)
                     .withBody(MAPPER.writeValueAsString(body));
         } catch (Exception e) {
             return error(500, "Serialization error: " + e.getMessage());

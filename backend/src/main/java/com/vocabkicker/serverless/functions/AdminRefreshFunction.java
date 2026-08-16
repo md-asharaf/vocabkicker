@@ -11,7 +11,9 @@ import com.vocabkicker.serverless.service.AuthService;
 import com.vocabkicker.serverless.utils.CorsHelper;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component("adminRefresh")
@@ -35,17 +37,7 @@ public class AdminRefreshFunction extends ApiGatewayHandler {
     }
 
     if (req == null || req.getRefreshToken() == null) {
-      String cookieHeader = request.getHeaders() != null ? request.getHeaders().getOrDefault("cookie", request.getHeaders().get("Cookie")) : null;
-      String extractedToken = null;
-      if (cookieHeader != null) {
-        for (String cookie : cookieHeader.split(";")) {
-          cookie = cookie.trim();
-          if (cookie.startsWith("refresh_token=")) {
-            extractedToken = cookie.substring("refresh_token=".length());
-            break;
-          }
-        }
-      }
+      String extractedToken = CorsHelper.extractCookie(request.getHeaders(), "refresh_token");
       if (extractedToken != null) {
         req = new RefreshRequest();
         req.setRefreshToken(extractedToken);
@@ -68,14 +60,13 @@ public class AdminRefreshFunction extends ApiGatewayHandler {
         "refresh_token=%s; Path=/; HttpOnly; Max-Age=%d; SameSite=None; Secure",
         authResult.getRefreshToken(), 7 * 24 * 60 * 60);
 
-    final Map<String, String> extraHeaders = new HashMap<>();
-    extraHeaders.put("Set-Cookie", accessCookie);
+    final Map<String, List<String>> multiHeaders = new HashMap<>();
+    multiHeaders.put("Set-Cookie", Arrays.asList(accessCookie, refreshCookie));
 
     final Map<String, String> body = new HashMap<>();
     body.put("message", "Token refreshed");
     body.put("refreshToken", authResult.getRefreshToken());
-    body.put("refreshCookie", refreshCookie);
 
-    return CorsHelper.okWithHeaders(body, extraHeaders);
+    return CorsHelper.okWithMultiValueHeaders(body, multiHeaders);
   }
 }

@@ -1,6 +1,7 @@
 package com.vocabkicker.serverless.service;
 
 import com.vocabkicker.serverless.exception.UnauthorizedException;
+import com.vocabkicker.serverless.utils.CorsHelper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -63,20 +64,7 @@ public class JwtService {
       return authHeader.substring(7);
     }
 
-    String cookieHeader = headers.get("Cookie");
-    if (cookieHeader == null) {
-      cookieHeader = headers.get("cookie");
-    }
-    if (cookieHeader != null) {
-      String[] cookies = cookieHeader.split(";");
-      for (String cookie : cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith("admin_token=")) {
-          return cookie.substring("admin_token=".length());
-        }
-      }
-    }
-    return null;
+    return CorsHelper.extractCookie(headers, "admin_token");
   }
 
   public Claims parseToken(String token) {

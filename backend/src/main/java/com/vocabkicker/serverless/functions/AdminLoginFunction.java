@@ -9,7 +9,9 @@ import com.vocabkicker.serverless.service.AuthService;
 import com.vocabkicker.serverless.utils.CorsHelper;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component("adminLogin")
@@ -34,14 +36,13 @@ public class AdminLoginFunction extends ApiGatewayHandler {
         "refresh_token=%s; Path=/; HttpOnly; Max-Age=%d; SameSite=None; Secure",
         authResult.getRefreshToken(), 7 * 24 * 60 * 60);
 
-    final Map<String, String> extraHeaders = new HashMap<>();
-    extraHeaders.put("Set-Cookie", accessCookie);
+    final Map<String, List<String>> multiHeaders = new HashMap<>();
+    multiHeaders.put("Set-Cookie", Arrays.asList(accessCookie, refreshCookie));
 
     final Map<String, String> body = new HashMap<>();
     body.put("message", "Login successful");
     body.put("refreshToken", authResult.getRefreshToken());
-    body.put("refreshCookie", refreshCookie);
 
-    return CorsHelper.okWithHeaders(body, extraHeaders);
+    return CorsHelper.okWithMultiValueHeaders(body, multiHeaders);
   }
 }

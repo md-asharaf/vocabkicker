@@ -15,21 +15,20 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
     });
 
     if (refreshRes.ok) {
-      const setCookieHeader = refreshRes.headers.get('set-cookie');
-      if (setCookieHeader) {
-        const parts = setCookieHeader.split(',');
-        for (const cookieStr of parts) {
+      const setCookies = refreshRes.headers.getSetCookie();
+      if (setCookies && setCookies.length > 0) {
+        for (const cookieStr of setCookies) {
           if (cookieStr.includes('admin_token=')) {
             const match = cookieStr.match(/admin_token=([^;]+)/);
             if (match) {
               currentToken = match[1];
-              cookieStore.set('admin_token', currentToken, { path: '/', httpOnly: true });
+              cookieStore.set('admin_token', currentToken, { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
             }
           }
           if (cookieStr.includes('refresh_token=')) {
             const match = cookieStr.match(/refresh_token=([^;]+)/);
             if (match) {
-              cookieStore.set('refresh_token', match[1], { path: '/', httpOnly: true, maxAge: 7 * 24 * 60 * 60 });
+              cookieStore.set('refresh_token', match[1], { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 });
             }
           }
         }
@@ -57,22 +56,21 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
     });
 
     if (refreshRes.ok) {
-      const setCookieHeader = refreshRes.headers.get('set-cookie');
+      const setCookies = refreshRes.headers.getSetCookie();
       let newToken = currentToken;
-      if (setCookieHeader) {
-        const parts = setCookieHeader.split(',');
-        for (const cookieStr of parts) {
+      if (setCookies && setCookies.length > 0) {
+        for (const cookieStr of setCookies) {
           if (cookieStr.includes('admin_token=')) {
             const match = cookieStr.match(/admin_token=([^;]+)/);
             if (match) {
               newToken = match[1];
-              cookieStore.set('admin_token', newToken, { path: '/', httpOnly: true });
+              cookieStore.set('admin_token', newToken, { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
             }
           }
           if (cookieStr.includes('refresh_token=')) {
             const match = cookieStr.match(/refresh_token=([^;]+)/);
             if (match) {
-              cookieStore.set('refresh_token', match[1], { path: '/', httpOnly: true, maxAge: 7 * 24 * 60 * 60 });
+              cookieStore.set('refresh_token', match[1], { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 });
             }
           }
         }

@@ -25,12 +25,6 @@ public abstract class ApiGatewayHandler implements Function<APIGatewayProxyReque
     } catch (BadRequestException e) {
       return CorsHelper.error(400, e.getMessage());
     } catch (Exception e) {
-      if (e.getMessage() != null && e.getMessage().contains("Invalid credentials")) {
-        return CorsHelper.error(401, e.getMessage());
-      }
-      if (e.getMessage() != null && e.getMessage().contains("already exists")) {
-        return CorsHelper.error(409, e.getMessage());
-      }
       return CorsHelper.error(500, e.getMessage());
     }
   }

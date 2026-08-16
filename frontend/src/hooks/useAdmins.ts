@@ -31,7 +31,10 @@ export function useAdmins() {
     setIsLoading(false);
   }, []);
 
-  useEffect(() => { fetchAdmins(); }, [fetchAdmins]);
+  useEffect(() => {
+    // eslint-disable-next-line
+    fetchAdmins(); 
+  }, [fetchAdmins]);
 
   const openCreate = () => setIsCreating(true);
   const closeCreate = () => setIsCreating(false);

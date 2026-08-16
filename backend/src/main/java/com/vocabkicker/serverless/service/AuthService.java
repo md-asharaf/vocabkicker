@@ -12,13 +12,9 @@ import com.vocabkicker.serverless.exception.NotFoundException;
 import com.vocabkicker.serverless.exception.UnauthorizedException;
 import com.vocabkicker.serverless.repository.UserRepository;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,162 +24,146 @@ import java.util.stream.Collectors;
 @Service
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
-    private final String jwtSecret;
+  private final UserRepository userRepository;
+  private final BCryptPasswordEncoder passwordEncoder;
+  private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
-        this.jwtSecret = System.getenv("JWT_SECRET");
+  public AuthService(UserRepository userRepository, JwtService jwtService) {
+    this.userRepository = userRepository;
+    this.jwtService = jwtService;
+    this.passwordEncoder = new BCryptPasswordEncoder();
+  }
+
+  public AuthResult login(LoginRequest req) {
+    Optional<User> userOpt = userRepository.findByEmail(req.getEmail());
+    if (userOpt.isEmpty()) {
+      throw new UnauthorizedException("Invalid credentials");
     }
 
-    public AuthResult login(LoginRequest req) {
-        Optional<User> userOpt = userRepository.findByEmail(req.getEmail());
-        if (userOpt.isEmpty()) {
-            throw new UnauthorizedException("Invalid credentials");
-        }
-
-        User user = userOpt.get();
-        if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
-            throw new UnauthorizedException("Invalid credentials");
-        }
-
-        return generateTokensAndSave(user);
-    }
-    public long getAdminCount() {
-        return userRepository.count();
+    User user = userOpt.get();
+    if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
+      throw new UnauthorizedException("Invalid credentials");
     }
 
-    public List<UserDto> getAllAdmins() {
-        return userRepository.findAll().stream().map(user -> UserDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build()).collect(Collectors.toList());
+    return generateTokensAndSave(user);
+  }
+
+  public long getAdminCount() {
+    return userRepository.count();
+  }
+
+  public List<UserDto> getAllAdmins() {
+    return userRepository.findAll().stream().map(user -> UserDto.builder()
+        .id(user.getId())
+        .email(user.getEmail())
+        .createdAt(user.getCreatedAt())
+        .updatedAt(user.getUpdatedAt())
+        .build()).collect(Collectors.toList());
+  }
+
+  public UserDto updateAdmin(String id, UpdateAdminRequest req) {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new NotFoundException("Admin not found"));
+
+    if (req.getEmail() != null && !req.getEmail().isBlank()) {
+      String newEmail = req.getEmail().toLowerCase();
+      if (!newEmail.equals(user.getEmail())) {
+        if (userRepository.findByEmail(newEmail).isPresent()) {
+          throw new ConflictException("An admin with this email already exists");
+        }
+        user.setEmail(newEmail);
+      }
     }
 
-    public UserDto updateAdmin(String id, UpdateAdminRequest req) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Admin not found"));
-
-        if (req.getEmail() != null && !req.getEmail().isBlank()) {
-            String newEmail = req.getEmail().toLowerCase();
-            if (!newEmail.equals(user.getEmail())) {
-                if (userRepository.findByEmail(newEmail).isPresent()) {
-                    throw new ConflictException("An admin with this email already exists");
-                }
-                user.setEmail(newEmail);
-            }
-        }
-
-        if (req.getPassword() != null && !req.getPassword().isBlank()) {
-            user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
-        }
-
-        user.setUpdatedAt(System.currentTimeMillis());
-        userRepository.save(user);
-
-        return UserDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
+    if (req.getPassword() != null && !req.getPassword().isBlank()) {
+      user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
     }
 
-    public void deleteAdmin(String id) {
-        userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Admin not found"));
-        userRepository.deleteById(id);
+    user.setUpdatedAt(System.currentTimeMillis());
+    userRepository.save(user);
+
+    return UserDto.builder()
+        .id(user.getId())
+        .email(user.getEmail())
+        .createdAt(user.getCreatedAt())
+        .updatedAt(user.getUpdatedAt())
+        .build();
+  }
+
+  public void deleteAdmin(String id) {
+    userRepository.findById(id)
+        .orElseThrow(() -> new NotFoundException("Admin not found"));
+    userRepository.deleteById(id);
+  }
+
+  public void createAdmin(LoginRequest req) {
+    if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+      throw new ConflictException("An admin user with this email already exists.");
     }
 
-    public void createAdmin(LoginRequest req) {
-        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
-            throw new ConflictException("An admin user with this email already exists.");
-        }
+    final long now = System.currentTimeMillis();
+    final User user = User.builder()
+        .id(UUID.randomUUID().toString())
+        .email(req.getEmail().toLowerCase())
+        .passwordHash(passwordEncoder.encode(req.getPassword()))
+        .createdAt(now)
+        .updatedAt(now)
+        .build();
 
-        final long now = System.currentTimeMillis();
-        final User user = User.builder()
-                .id(UUID.randomUUID().toString())
-                .email(req.getEmail().toLowerCase())
-                .passwordHash(passwordEncoder.encode(req.getPassword()))
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
+    userRepository.save(user);
 
-        userRepository.save(user);
+  }
 
+  public AuthResult refresh(RefreshRequest req) {
+    if (req.getRefreshToken() == null || req.getRefreshToken().isEmpty()) {
+      throw new BadRequestException("Refresh token is required");
     }
 
-    public AuthResult refresh(RefreshRequest req) {
-        if (req.getRefreshToken() == null || req.getRefreshToken().isEmpty()) {
-            throw new BadRequestException("Refresh token is required");
-        }
-
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-        Claims claims;
-        try {
-            claims = Jwts.parser().verifyWith(key).build()
-                    .parseSignedClaims(req.getRefreshToken()).getPayload();
-        } catch (Exception e) {
-            throw new UnauthorizedException("Invalid refresh token");
-        }
-
-        if (!"refresh".equals(claims.get("type"))) {
-            throw new UnauthorizedException("Invalid token type");
-        }
-
-        if (claims.getExpiration().before(new Date())) {
-            throw new UnauthorizedException("Refresh token expired");
-        }
-
-        String userId = claims.getSubject();
-        Optional<User> userOpt = userRepository.findById(userId);
-
-        if (userOpt.isEmpty()) {
-            throw new NotFoundException("User not found");
-        }
-
-        User user = userOpt.get();
-        if (user.getRefreshTokenHash() == null || !passwordEncoder.matches(req.getRefreshToken(), user.getRefreshTokenHash())) {
-            throw new UnauthorizedException("Invalid refresh token");
-        }
-
-        if (user.getRefreshTokenExpiry() != null && user.getRefreshTokenExpiry() < System.currentTimeMillis()) {
-            throw new UnauthorizedException("Refresh token expired in db");
-        }
-
-        return generateTokensAndSave(user);
+    Claims claims;
+    try {
+      claims = jwtService.parseToken(req.getRefreshToken());
+    } catch (Exception e) {
+      throw new UnauthorizedException("Invalid refresh token");
     }
 
-    private AuthResult generateTokensAndSave(User user) {
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-
-        long accessExpiration = 1000L * 60 * 15; // 15 mins
-        String accessToken = Jwts.builder()
-                .subject(user.getId())
-                .claim("email", user.getEmail())
-                .claim("type", "access")
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + accessExpiration))
-                .signWith(key)
-                .compact();
-
-        long refreshExpiration = 1000L * 60 * 60 * 24 * 7; // 7 days
-        String refreshToken = Jwts.builder()
-                .subject(user.getId())
-                .claim("type", "refresh")
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
-                .signWith(key)
-                .compact();
-
-        user.setRefreshTokenHash(passwordEncoder.encode(refreshToken));
-        user.setRefreshTokenExpiry(System.currentTimeMillis() + refreshExpiration);
-        userRepository.save(user);
-
-        return new AuthResult(accessToken, refreshToken);
+    if (!"refresh".equals(claims.get("type"))) {
+      throw new UnauthorizedException("Invalid token type");
     }
+
+    if (claims.getExpiration().before(new Date())) {
+      throw new UnauthorizedException("Refresh token expired");
+    }
+
+    String userId = claims.getSubject();
+    Optional<User> userOpt = userRepository.findById(userId);
+
+    if (userOpt.isEmpty()) {
+      throw new NotFoundException("User not found");
+    }
+
+    User user = userOpt.get();
+    if (user.getRefreshTokenHash() == null
+        || !passwordEncoder.matches(req.getRefreshToken(), user.getRefreshTokenHash())) {
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+
+    if (user.getRefreshTokenExpiry() != null && user.getRefreshTokenExpiry() < System.currentTimeMillis()) {
+      throw new UnauthorizedException("Refresh token expired in db");
+    }
+
+    return generateTokensAndSave(user);
+  }
+
+  private AuthResult generateTokensAndSave(User user) {
+    String accessToken = jwtService.generateAccessToken(user.getId(), user.getEmail());
+    String refreshToken = jwtService.generateRefreshToken(user.getId());
+
+    long refreshExpiration = 1000L * 60 * 60 * 24 * 7; // 7 days
+
+    user.setRefreshTokenHash(passwordEncoder.encode(refreshToken));
+    user.setRefreshTokenExpiry(System.currentTimeMillis() + refreshExpiration);
+    userRepository.save(user);
+
+    return new AuthResult(accessToken, refreshToken);
+  }
 }

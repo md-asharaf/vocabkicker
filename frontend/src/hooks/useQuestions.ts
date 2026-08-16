@@ -48,6 +48,7 @@ export function useQuestions() {
   }, [fetchQuestions, pageHistory, currentIndex, activeSearch]);
 
   useEffect(() => {
+    // eslint-disable-next-line
     fetchQuestions(pageHistory[currentIndex], activeSearch);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, activeSearch]);

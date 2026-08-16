@@ -49,6 +49,7 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete('admin_token');
+  cookieStore.delete('refresh_token');
   redirect('/admin/login');
 }
 
