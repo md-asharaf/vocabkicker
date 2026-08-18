@@ -20,7 +20,7 @@ export default function GameCanvas() {
   const initialized = useRef(false);
 
   const [loading, setLoading] = useState(true);
-  const [loadingMessage, setLoadingMessage] = useState("Loading VocabKicker 3D…");
+  const [loadingMessage, setLoadingMessage] = useState("Loading VocabKicker…");
   const [showMenu, setShowMenu] = useState(false);
   const [status, setStatus] = useState<GameStatus | null>(null);
 
