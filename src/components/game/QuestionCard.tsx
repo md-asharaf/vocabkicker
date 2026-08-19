@@ -37,7 +37,7 @@ export default function QuestionCard({ question }: Props) {
 
       {showHint && (
         <div id="hintText" style={{ display: 'inline' }}>
-          Hint: {question.hints && question.hints.length > 0 ? question.hints.map(h => `${h.label}: ${h.value}`).join(" | ") : "No hints available"}
+          Hint: {question.hint ? `${question.hint.label}: ${question.hint.value}` : "No hint available"}
         </div>
       )}
 
