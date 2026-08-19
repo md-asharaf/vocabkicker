@@ -2,7 +2,7 @@ import { QUESTIONS_PER_GAME } from './engine/constants';
 
 interface Props {
   score: number;
-  results: readonly { readonly correct: boolean; readonly word: string }[];
+  results: readonly { readonly correct: boolean; readonly answerText: string }[];
   maxStreak: number;
   onPlayAgain: () => void;
   onMenu: () => void;

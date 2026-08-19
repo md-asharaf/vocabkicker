@@ -1,13 +1,14 @@
-import { QUESTIONS_PER_GAME } from './engine/constants';
+
 
 interface HUDProps {
   score: number;
   streak: number;
   qIdx: number;
-  results: readonly { readonly correct: boolean; readonly word: string }[];
+  totalQuestions: number;
+  results: readonly { readonly correct: boolean; readonly answerText: string }[];
 }
 
-export default function HUD({ score, streak, qIdx, results }: HUDProps) {
+export default function HUD({ score, streak, qIdx, totalQuestions, results }: HUDProps) {
   return (
     <div id="hud" style={{ display: 'flex' }}>
       <div className="hudItem">
@@ -16,7 +17,7 @@ export default function HUD({ score, streak, qIdx, results }: HUDProps) {
       </div>
       <div className="hudItem">
         <div id="questionPills">
-          {Array.from({ length: QUESTIONS_PER_GAME }).map((_, i) => {
+          {Array.from({ length: totalQuestions }).map((_, i) => {
             let cls = '';
             if (i < results.length) {
               cls = results[i].correct ? 'correct' : 'wrong';
@@ -26,7 +27,7 @@ export default function HUD({ score, streak, qIdx, results }: HUDProps) {
             return <div key={i} className={`qPill ${cls}`} />;
           })}
         </div>
-        <span className="hudLabel">Q. {qIdx + 1} / {QUESTIONS_PER_GAME}</span>
+        <span className="hudLabel">Q. {qIdx + 1} / {totalQuestions}</span>
       </div>
       <div className="hudItem">
         <span className="hudLabel">&#x1F525; Streak</span>

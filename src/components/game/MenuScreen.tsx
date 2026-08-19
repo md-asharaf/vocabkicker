@@ -7,7 +7,7 @@ export default function MenuScreen({ onStart }: { onStart: () => void }) {
       <p className="menuTag">Master vocabulary through penalty kicks &middot; Full 3D</p>
       <button className="menuBtn" onClick={onStart}>&#x26BD;&nbsp; KICK OFF</button>
       <div className="menuFeatures">
-        <span className="featBadge">&#x1F9E0; 10 Questions</span>
+        <span className="featBadge">&#x1F9E0; Multiple Questions</span>
         <span className="featBadge">&#x1F945; 4 Goalkeepers</span>
         <span className="featBadge">&#x1F4AF; +100 / &minus;10 pts</span>
         <span className="featBadge">&#x1F300; Curve Shot</span>

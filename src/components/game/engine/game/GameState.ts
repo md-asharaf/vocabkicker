@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {
-  GK_Z, GOAL_W, GOAL_H, BALL_POS, QUESTIONS_PER_GAME, PTS_CORRECT, PTS_WRONG
+  GK_Z, GOAL_W, GOAL_H, BALL_POS, PTS_CORRECT, PTS_WRONG
 } from '../constants';
 import { camera } from '../scene';
 import { playKick, playGoal, playMiss, playWhistle } from '../audio/sounds';
@@ -53,7 +53,7 @@ export class GameState {
   private _score: number = 0;
   private _streak: number = 0;
   private _maxStreak: number = 0;
-  private _results: { readonly correct: boolean; readonly word: string }[] = [];
+  private _results: { readonly correct: boolean; readonly answerText: string }[] = [];
 
   private _qIdx: number = 0;
   private _phase: string = PHASE.IDLE;
@@ -96,6 +96,7 @@ export class GameState {
       score: this._score,
       streak: this._streak,
       qIdx: this._qIdx,
+      totalQuestions: this._quiz.length,
       maxStreak: this._maxStreak,
       results: this._results,
       question: this._question,
@@ -175,7 +176,7 @@ export class GameState {
     this._flashT = 0;
     (this._flashMesh.material as THREE.Material).opacity = 0;
 
-    this._gkManager.setupGoalkeepers(q.options, q.answer);
+    this._gkManager.setupGoalkeepers(q.options, q.answer.value);
     this._emitUpdate();
 
     setTimeout(() => { if (this._phase === PHASE.IDLE) playWhistle(); }, 280);
@@ -249,7 +250,7 @@ export class GameState {
 
     this._score = Math.max(0, this._score + pts);
     const q = this._quiz.getQuestion(this._qIdx)!;
-    this._results.push({ correct, word: q.answer });
+    this._results.push({ correct, answerText: q.answer.value });
 
     this._phase = PHASE.RESULT;
     this._feedback = { correct, pts, msg: customMsg };
@@ -262,7 +263,7 @@ export class GameState {
 
   private _nextQuestion(): void {
     this._qIdx++;
-    if (this._qIdx >= QUESTIONS_PER_GAME) { this._endGame(); return; }
+    if (this._qIdx >= this._quiz.length) { this._endGame(); return; }
     this._loadQuestion();
   }
 

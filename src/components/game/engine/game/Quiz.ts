@@ -12,6 +12,10 @@ export class Quiz {
     this._questions = await QuizApi.fetchQuestions();
   }
 
+  public get length(): number {
+    return this._questions.length;
+  }
+
   public getQuestion(idx: number): QuizQuestion | null {
     return this._questions[idx] ?? null;
   }

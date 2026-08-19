@@ -9,7 +9,7 @@ export class GoalkeeperManager {
   private readonly _scene: THREE.Scene;
   private readonly _gks: readonly Goalkeeper[];
   private _cardSprites: THREE.Sprite[] = [];
-  
+
   private _savedBy: Goalkeeper | null = null;
   private _missedBy: Goalkeeper | null = null;
 

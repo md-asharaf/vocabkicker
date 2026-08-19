@@ -13,23 +13,21 @@ export class QuizApi {
 
       const url = `${baseUrl}/projects/${projectId}/quiz`;
       const res = await fetch(url);
-      
+
       if (!res.ok) throw new Error('Failed to fetch questions from backend');
-      
+
       const json = await res.json();
-      
-      const rawArray = (json && json.success && Array.isArray(json.data)) 
-        ? json.data 
+
+      const rawArray = (json && json.success && Array.isArray(json.data))
+        ? json.data
         : (Array.isArray(json) ? json : []);
 
       return rawArray.map((q: any) => {
-        // Backend returns "answer" as {label, value} due to @JsonProperty("answer")
         const answerObj = q.answer || { label: "Answer", value: "Unknown" };
-        
+
         return {
           prompt: q.prompt || { label: "Question", value: "Unknown Question" },
-          answerField: answerObj,
-          answer: answerObj.value, // frontend game engine expects string answer for checking correctness
+          answer: answerObj,
           hint: q.hint,
           options: q.options || []
         };

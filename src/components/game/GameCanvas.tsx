@@ -52,7 +52,7 @@ export default function GameCanvas() {
     setShowMenu(true);
   };
 
-  const isGameOver = status && status.qIdx >= QUESTIONS_PER_GAME;
+  const isGameOver = status && status.qIdx >= status.totalQuestions;
   const isGameActive = status !== null && !showMenu && !isGameOver;
 
   return (
@@ -65,7 +65,7 @@ export default function GameCanvas() {
 
       {isGameActive && status && (
         <>
-          <HUD score={status.score} streak={status.streak} qIdx={status.qIdx} results={status.results} />
+          <HUD score={status.score} streak={status.streak} qIdx={status.qIdx} totalQuestions={status.totalQuestions} results={status.results} />
           <ControlsHUD
             onPause={() => controller.current?.pause()}
             onResume={() => controller.current?.resume()}
