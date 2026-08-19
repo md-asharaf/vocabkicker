@@ -1,18 +1,35 @@
 import { QuizQuestion } from '../types/game';
 
 export class QuizApi {
-  private static readonly API_URL = process.env.NEXT_PUBLIC_API_URL
-    ? `${process.env.NEXT_PUBLIC_API_URL}/quiz/generate`
-    : 'http://localhost:8080/quiz/generate';
   public static async fetchQuestions(): Promise<QuizQuestion[]> {
     try {
-      const res = await fetch(QuizApi.API_URL);
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+      const projectId = process.env.NEXT_PUBLIC_PROJECT_ID;
+
+      if (!projectId) {
+        console.error('NEXT_PUBLIC_PROJECT_ID is not configured in the environment.');
+        return [];
+      }
+
+      const url = `${baseUrl}/projects/${projectId}/quiz`;
+      const res = await fetch(url);
+
       if (!res.ok) throw new Error('Failed to fetch questions from backend');
-      return (await res.json()) as QuizQuestion[];
+
+      const json = await res.json();
+
+      if (json && json.success && Array.isArray(json.data)) {
+        return json.data as QuizQuestion[];
+      }
+
+      if (Array.isArray(json)) {
+        return json as QuizQuestion[];
+      }
+
+      throw new Error('Unexpected response format');
     } catch (err) {
       console.error('Backend is down!', err);
       return [];
     }
   }
 }
-

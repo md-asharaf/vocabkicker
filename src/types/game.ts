@@ -1,7 +1,8 @@
 export interface QuizQuestion {
-  readonly definition: string;
+  readonly prompt: { label: string, value: string };
+  readonly answerField: { label: string, value: string };
   readonly answer: string;
-  readonly mnemonic: string;
+  readonly hints: readonly { label: string, value: string }[];
   readonly options: readonly string[];
 }
 

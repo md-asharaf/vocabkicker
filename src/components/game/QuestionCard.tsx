@@ -17,7 +17,7 @@ export default function QuestionCard({ question }: Props) {
   return (
     <>
       <div id="questionCard" style={{ display: 'block' }}>
-        <div id="definitionText">&quot;{question.definition}&quot;</div>
+        <div id="definitionText">&quot;{question.prompt?.value}&quot;</div>
         <div id="optionsRow">
           {question.options.map((opt, idx) => (
             <div key={idx} className="optItem" style={{ color: '#ccc' }}>
@@ -37,7 +37,7 @@ export default function QuestionCard({ question }: Props) {
 
       {showHint && (
         <div id="hintText" style={{ display: 'inline' }}>
-          Hint: {question.mnemonic}
+          Hint: {question.hints && question.hints.length > 0 ? question.hints.map(h => `${h.label}: ${h.value}`).join(" | ") : "No hints available"}
         </div>
       )}
 
