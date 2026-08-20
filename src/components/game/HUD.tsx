@@ -15,8 +15,8 @@ export default function HUD({ score, streak, qIdx, totalQuestions, results }: HU
         <span className="hudLabel">Score</span>
         <span className="hudValue">{score}</span>
       </div>
-      <div className="hudItem">
-        <div id="questionPills">
+      <div className="hudItem" style={{ flexGrow: 1, maxWidth: '400px', margin: '0 1rem' }}>
+        <div id="progressBarContainer">
           {Array.from({ length: totalQuestions }).map((_, i) => {
             let cls = '';
             if (i < results.length) {
@@ -24,7 +24,7 @@ export default function HUD({ score, streak, qIdx, totalQuestions, results }: HU
             } else if (i === qIdx) {
               cls = 'current';
             }
-            return <div key={i} className={`qPill ${cls}`} />;
+            return <div key={i} className={`progressSegment ${cls}`} style={{ width: `${100 / totalQuestions}%` }} />;
           })}
         </div>
         <span className="hudLabel">Q. {qIdx + 1} / {totalQuestions}</span>

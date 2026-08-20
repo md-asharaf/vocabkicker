@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 export class AssetManager {
@@ -8,83 +9,87 @@ export class AssetManager {
   public gkBase: THREE.Group | null = null;
   public gkAnimations: { [key: string]: THREE.AnimationClip } = {};
 
+  private loader: GLTFLoader;
+
   constructor() {
     this.models = {};
     this.animations = {};
+
+    this.loader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('/draco/');
+    this.loader.setDRACOLoader(dracoLoader);
   }
 
-  async loadAll(onProgress: ((progress: number) => void) | null) {
-    const loader = new FBXLoader();
+  private _loadPromise: Promise<void> | null = null;
+
+  loadAll(onProgress: (progress: number) => void) {
+    if (this._loadPromise) return this._loadPromise;
 
     const files = [
-      { key: 'kicker', path: './assets/Strike Foward Jog.fbx' },
-      { key: 'gk_idle', path: './assets/Goalkeeper Idle.fbx' },
-      { key: 'gk_miss', path: './assets/Goalkeeper Miss.fbx' },
-      { key: 'dive_left', path: './assets/Goalkeeper Left Diving Save.fbx' },
-      { key: 'dive_right', path: './assets/Goalkeeper Right Diving Save.fbx' },
-      { key: 'catch_high', path: './assets/Goalkeeper High Catch.fbx' },
-      { key: 'catch_mid', path: './assets/Goalkeeper Standing Catch.fbx' },
-      { key: 'catch_low', path: './assets/Goalkeeper Low Catch.fbx' }
+      { key: 'kicker', path: './assets/Strike Foward Jog.glb' },
+      { key: 'gk_idle', path: './assets/Goalkeeper Idle.glb' },
+      { key: 'gk_miss', path: './assets/Goalkeeper Miss.glb' },
+      { key: 'dive_left', path: './assets/Goalkeeper Left Diving Save.glb' },
+      { key: 'dive_right', path: './assets/Goalkeeper Right Diving Save.glb' },
+      { key: 'catch_high', path: './assets/Goalkeeper High Catch.glb' },
+      { key: 'catch_mid', path: './assets/Goalkeeper Standing Catch.glb' },
+      { key: 'catch_low', path: './assets/Goalkeeper Low Catch.glb' }
     ];
 
-    let loaded = 0;
+    this._loadPromise = this._loadFiles(files, onProgress).then(() => {
+      this.gkBase = this.models['gk_idle'];
+      this.gkAnimations['idle'] = this.animations['gk_idle'];
+      this.gkAnimations['miss'] = this.animations['gk_miss'];
+      this.gkAnimations['dive_left'] = this.animations['dive_left'];
+      this.gkAnimations['dive_right'] = this.animations['dive_right'];
+      this.gkAnimations['catch_high'] = this.animations['catch_high'];
+      this.gkAnimations['catch_mid'] = this.animations['catch_mid'];
+      this.gkAnimations['catch_low'] = this.animations['catch_low'];
+    });
 
+    return this._loadPromise;
+  }
+
+  private async _loadFiles(files: { key: string, path: string }[], onProgress: ((progress: number) => void) | null) {
+    let loaded = 0;
     const loadProms = files.map(f => {
       return new Promise<void>((resolve, reject) => {
-        loader.load(f.path, (fbx: THREE.Group) => {
-          // Normalize scale since Mixamo FBX files are usually scaled by 100 or 0.01
-          fbx.scale.setScalar(0.01);
-
-          // Enable shadows
+        this.loader.load(f.path, (gltf) => {
+          const fbx = gltf.scene;
           fbx.traverse((child: THREE.Object3D) => {
             if ((child as THREE.Mesh).isMesh) {
               const mesh = child as THREE.Mesh;
               mesh.castShadow = true;
               mesh.receiveShadow = true;
-              // Fix materials (Mixamo standard materials sometimes need tweaking)
               if (mesh.material) {
                 if (Array.isArray(mesh.material)) {
                   mesh.material.forEach(m => {
-                    if ((m as THREE.MeshPhongMaterial).shininess !== undefined) {
-                        (m as THREE.MeshPhongMaterial).shininess = 0;
+                    if ((m as THREE.MeshStandardMaterial).roughness !== undefined) {
+                      (m as THREE.MeshStandardMaterial).roughness = 1;
+                      (m as THREE.MeshStandardMaterial).metalness = 0;
                     }
                   });
                 } else {
-                  if ((mesh.material as THREE.MeshPhongMaterial).shininess !== undefined) {
-                    (mesh.material as THREE.MeshPhongMaterial).shininess = 0;
+                  if ((mesh.material as THREE.MeshStandardMaterial).roughness !== undefined) {
+                    (mesh.material as THREE.MeshStandardMaterial).roughness = 1;
+                    (mesh.material as THREE.MeshStandardMaterial).metalness = 0;
                   }
                 }
               }
             }
           });
-
           this.models[f.key] = fbx;
-
-          if (fbx.animations && fbx.animations.length > 0) {
-            this.animations[f.key] = fbx.animations[0];
+          if (gltf.animations && gltf.animations.length > 0) {
+            this.animations[f.key] = gltf.animations[0];
           }
-
           loaded++;
           if (onProgress) onProgress(loaded / files.length);
           resolve();
         }, undefined, reject);
       });
     });
-
     await Promise.all(loadProms);
-
-    // Process goalkeeper base model
-    this.gkBase = this.models['gk_idle'];
-    
-    this.gkAnimations = {
-      idle: this.animations['gk_idle'],
-      miss: this.animations['gk_miss'],
-      dive_left: this.animations['dive_left'],
-      dive_right: this.animations['dive_right'],
-      catch_high: this.animations['catch_high'],
-      catch_mid: this.animations['catch_mid'],
-      catch_low: this.animations['catch_low']
-    };
   }
 
   cloneGoalkeeper(): THREE.Group {

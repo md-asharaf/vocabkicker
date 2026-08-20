@@ -19,19 +19,26 @@ export default function GameCanvas() {
   const controller = useRef<GameController | null>(null);
   const initialized = useRef(false);
 
-  const [loading, setLoading] = useState(true);
-  const [loadingMessage, setLoadingMessage] = useState("Loading VocabKicker…");
-  const [showMenu, setShowMenu] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Loading 3D Assets (0%)...");
+  const [showMenu, setShowMenu] = useState(true);
   const [status, setStatus] = useState<GameStatus | null>(null);
+
+  const progressRef = useRef(0);
 
   useEffect(() => {
     if (!initialized.current && canvasRef.current) {
       initialized.current = true;
-      bootstrap(canvasRef.current, (s) => setStatus(s))
+      bootstrap(
+        canvasRef.current,
+        (s) => setStatus(s),
+        (progress) => {
+          progressRef.current = progress;
+          setLoadingMessage(`Loading 3D Assets (${Math.round(progress * 100)}%)...`);
+        }
+      )
         .then((ctrl) => {
           controller.current = ctrl;
-          setLoading(false);
-          setShowMenu(true);
         })
         .catch((err) => {
           console.error(err);
@@ -41,9 +48,19 @@ export default function GameCanvas() {
 
   const handleStart = async () => {
     setShowMenu(false);
-    setLoadingMessage("Preparing game...");
+    
+    // If assets are not fully loaded yet, wait for them
+    if (progressRef.current < 1) {
+      setLoading(true);
+      await controller.current?.waitForAssets();
+    }
+    
+    // Once assets are loaded, update message to show quiz generation
     setLoading(true);
-    await controller.current?.startGame();
+    setLoadingMessage("Generating quiz...");
+    await controller.current?.loadQuiz();
+    
+    controller.current?.startGame();
     setLoading(false);
   };
 
@@ -70,7 +87,7 @@ export default function GameCanvas() {
             onPause={() => controller.current?.pause()}
             onResume={() => controller.current?.resume()}
             onRestart={async () => {
-              setLoadingMessage("Preparing game...");
+              setLoadingMessage("Generating quiz...");
               setLoading(true);
               setStatus(null);
               await controller.current?.restart();

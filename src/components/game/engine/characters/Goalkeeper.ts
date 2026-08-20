@@ -51,13 +51,10 @@ export class Goalkeeper {
     this.mixer = new THREE.AnimationMixer(model);
 
     const anims = assetManager.gkAnimations;
-    this.actions.idle = this.mixer.clipAction(anims.idle);
-    this.actions.miss = this.mixer.clipAction(anims.miss);
-    this.actions.dive_left = this.mixer.clipAction(anims.dive_left);
-    this.actions.dive_right = this.mixer.clipAction(anims.dive_right);
-    this.actions.catch_high = this.mixer.clipAction(anims.catch_high);
-    this.actions.catch_mid = this.mixer.clipAction(anims.catch_mid);
-    this.actions.catch_low = this.mixer.clipAction(anims.catch_low);
+    if (anims.idle) {
+      this.actions.idle = this.mixer.clipAction(anims.idle);
+    }
+    // We will dynamically fetch other actions in a helper method when needed.
 
     let rightHand: THREE.Object3D | null = null;
     model.traverse((child: THREE.Object3D) => {
@@ -120,6 +117,17 @@ export class Goalkeeper {
     }
   }
 
+  private getAction(key: string): THREE.AnimationAction | null {
+    if (this.actions[key]) return this.actions[key];
+    
+    const anim = assetManager.gkAnimations[key];
+    if (anim && this.mixer) {
+      this.actions[key] = this.mixer.clipAction(anim);
+      return this.actions[key];
+    }
+    return null;
+  }
+
   dive(targetX: number, targetY: number) {
     this._diveTargetX = targetX;
     this._diveTargetY = targetY;
@@ -131,9 +139,11 @@ export class Goalkeeper {
       this._diveBodyDx = dx - (this._diveDir * 1.5);
 
       if (this._diveDir < 0) {
-        this.crossfade(this.actions.dive_right);
+        const action = this.getAction('dive_right');
+        if (action) this.crossfade(action);
       } else {
-        this.crossfade(this.actions.dive_left);
+        const action = this.getAction('dive_left');
+        if (action) this.crossfade(action);
       }
       this.group.scale.x = 1;
 
@@ -142,11 +152,14 @@ export class Goalkeeper {
       this._diveBodyDx = dx;
 
       if (targetY > 2.0) {
-        this.crossfade(this.actions.catch_high);
+        const action = this.getAction('catch_high');
+        if (action) this.crossfade(action);
       } else if (targetY > 1.0) {
-        this.crossfade(this.actions.catch_mid);
+        const action = this.getAction('catch_mid');
+        if (action) this.crossfade(action);
       } else {
-        this.crossfade(this.actions.catch_low);
+        const action = this.getAction('catch_low');
+        if (action) this.crossfade(action);
       }
     }
     this._diveT = 0;
@@ -154,7 +167,8 @@ export class Goalkeeper {
 
   miss() {
     this._diveTargetX = undefined;
-    this.crossfade(this.actions.miss);
+    const action = this.getAction('miss');
+    if (action) this.crossfade(action);
   }
 
   catch(ball: Ball) {

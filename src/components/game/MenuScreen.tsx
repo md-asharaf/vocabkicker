@@ -2,7 +2,7 @@ export default function MenuScreen({ onStart }: { onStart: () => void }) {
   return (
     <div id="menuScreen" style={{ display: 'flex' }}>
       <div className="menuBall">&#x26BD;</div>
-      <h1>VOCABKICKER 3D</h1>
+      <h1>VOCABKICKER</h1>
       <p className="menuSub">Kick to the right answer!</p>
       <p className="menuTag">Master vocabulary through penalty kicks &middot; Full 3D</p>
       <button className="menuBtn" onClick={onStart}>&#x26BD;&nbsp; KICK OFF</button>

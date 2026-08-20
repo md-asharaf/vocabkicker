@@ -37,15 +37,9 @@ export default function QuestionCard({ question }: Props) {
 
       {showHint && (
         <div id="hintText" style={{ display: 'inline' }}>
-          Hint: {question.hint ? `${question.hint.label}: ${question.hint.value}` : "No hint available"}
+          {question.hint ? `${question.hint.label}: ${question.hint.value}` : "No hint available"}
         </div>
       )}
-
-      <div id="extraInfoOverlay">
-        <div id="aimInstructions">
-          &#x1F3AF; Drag to aim &nbsp;|&nbsp; Release to kick &nbsp;|&nbsp; Aim wide = &#x1F300; Curve
-        </div>
-      </div>
     </>
   );
 }

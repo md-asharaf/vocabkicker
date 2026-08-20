@@ -62,11 +62,15 @@ html,body{width:100%;height:100%;height:100dvh;overflow:hidden;background:#0a0a0
 .hudLabel{font-size:.65rem;color:#ccc;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
 .hudValue{font-size:clamp(1.2rem,4vw,1.8rem);font-weight:900;color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,0.4)}
 #streakValue{color:#ff6b35}
-#questionPills{display:flex;gap:.3rem;flex-wrap:wrap;justify-content:center;margin-bottom:2px}
-.qPill{width:12px;height:12px;border-radius:50%;background:#333;transition:all .35s;border:1px solid #000}
-.qPill.correct{background:#22c55e;box-shadow:0 0 7px #22c55e}
-.qPill.wrong{background:#ef4444;box-shadow:0 0 7px #ef4444}
-.qPill.current{background:#ffd700;box-shadow:0 0 10px #ffd700;transform:scale(1.4)}
+#progressBarContainer{
+  display:flex;width:100%;height:8px;background:#222;border-radius:6px;
+  overflow:hidden;margin-bottom:6px;border:1px solid #111;box-shadow:inset 0 2px 4px rgba(0,0,0,0.5)
+}
+.progressSegment{height:100%;background:transparent;transition:background 0.3s;border-right:1px solid rgba(0,0,0,0.4)}
+.progressSegment:last-child{border-right:none}
+.progressSegment.correct{background:#22c55e;box-shadow:0 0 8px #22c55e}
+.progressSegment.wrong{background:#ef4444;box-shadow:0 0 8px #ef4444}
+.progressSegment.current{background:#ffd700;box-shadow:0 0 10px #ffd700}
 
 /* ─── Question card ─────────────────────────────────────────────── */
 #questionCard{
@@ -84,14 +88,14 @@ html,body{width:100%;height:100%;height:100dvh;overflow:hidden;background:#0a0a0
   display:flex;flex-direction:column;align-items:center;gap:6px;}
 #aimInstructions{color:rgba(255,255,255,0.9);font-size:.75rem;text-align:center;font-weight:600;
   background:rgba(0,0,0,0.6);padding:6px 14px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.5)}
-#hintRow{position:absolute;bottom:12px;right:14px;display:flex;align-items:center;gap:.7rem;}
+#hintRow{position:absolute;bottom:100%;right:14px;margin-bottom:12px;display:flex;align-items:center;gap:.7rem;}
 #hintBtn{background:rgba(255,215,0,.14);border:1px solid rgba(255,215,0,.4);
-  color:#ffd700;padding:.4rem 1rem;border-radius:20px;font-size:.8rem;font-weight:700;
+  color:#ffffff;padding:.4rem 1rem;border-radius:20px;font-size:.8rem;font-weight:700;
   cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;box-shadow:0 2px 10px rgba(0,0,0,0.3)}
 #hintBtn:hover{background:rgba(255,215,0,.3);transform:scale(1.05)}
 #hintText{
   position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);
-  background:rgba(0,0,0,0.9);color:#ffd700;padding:1.5rem 2rem;
+  background:rgba(0,0,0,0.9);color:#ffffff;padding:1.5rem 2rem;
   border:3px solid #ffd700;border-radius:16px;font-size:1.4rem;font-weight:700;
   z-index:150;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.8),0 0 30px rgba(255,215,0,0.4);
   display:none;animation:hintPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
